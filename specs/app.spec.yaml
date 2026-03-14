@@ -1,0 +1,90 @@
+# ============================================================
+# SpecKit Application Specification
+#
+# This file defines what the application needs at every stage
+# of its lifecycle. The SpecKit engine reads this file and
+# generates a GitHub Actions CI/CD pipeline automatically.
+#
+# 🎯 Demo tip: change a stage, then re-run:
+#     npm run speckit:generate
+# and watch the pipeline adapt!
+# ============================================================
+
+# ── Application metadata ─────────────────────────────────────
+name: ai-genius-speckit-demo
+description: Agentic DevOps demo application
+version: "1.0.0"
+
+# ── Runtime configuration ────────────────────────────────────
+# Supported: node | python | java | go | dotnet
+runtime: node
+runtimeVersion: "20"
+
+# ── Pipeline triggers ─────────────────────────────────────────
+# The SpecKit engine will configure GitHub Actions triggers
+# based on these settings.
+pipeline:
+  name: "SpecKit Demo — Agentic CI/CD Pipeline"
+  triggers:
+    push:
+      branches:
+        - main
+        - develop
+    pull_request:
+      branches:
+        - main
+    workflow_dispatch:
+
+# ── Pipeline stages ──────────────────────────────────────────
+# Each stage becomes a GitHub Actions job.
+# The SpecKit engine reasons over the stage type and options
+# to generate the correct set of steps automatically.
+stages:
+  # ── Stage 1: Lint ──────────────────────────────────────────
+  - name: Lint
+    type: lint
+    # No explicit commands needed — SpecKit infers `npm run lint`
+    # for Node.js applications.
+
+  # ── Stage 2: Build ─────────────────────────────────────────
+  - name: Build
+    type: build
+    # SpecKit auto-generates: npm ci + npm run build
+
+  # ── Stage 3: Test ──────────────────────────────────────────
+  - name: Test
+    type: test
+    coverage: true
+    coverageThreshold: 80
+
+  # ── Stage 4: Security Scan ─────────────────────────────────
+  - name: Security Scan
+    type: security
+    scanDependencies: true
+    scanSecrets: true
+    codeql: true
+
+  # ── Stage 5: Deploy to Staging ─────────────────────────────
+  - name: Deploy Staging
+    type: deploy
+    environment: staging
+    strategy: blue-green
+    healthCheck: true
+    rollback: true
+    # Only deploy from main/develop branches
+    condition: "github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'"
+
+  # ── Stage 6: Deploy to Production ──────────────────────────
+  - name: Deploy Production
+    type: deploy
+    environment: production
+    strategy: canary
+    healthCheck: true
+    rollback: true
+    # Only deploy from main
+    condition: "github.ref == 'refs/heads/main'"
+
+  # ── Stage 7: Notify ────────────────────────────────────────
+  - name: Notify
+    type: notify
+    channel: slack
