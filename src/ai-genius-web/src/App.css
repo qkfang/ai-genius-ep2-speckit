@@ -1,0 +1,202 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ── Header ────────────────────────────────────────── */
+.app-header {
+  text-align: center;
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid #334155;
+  margin-bottom: 2rem;
+}
+
+.header-badge {
+  display: inline-block;
+  background: #1d4ed8;
+  color: #bfdbfe;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-header p {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  max-width: 600px;
+  margin: 0 auto 1.25rem;
+  line-height: 1.6;
+}
+
+.series-link {
+  display: inline-block;
+  color: #38bdf8;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: 1px solid #38bdf8;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.series-link:hover {
+  background: #38bdf822;
+}
+
+/* ── Main ──────────────────────────────────────────── */
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Series card ───────────────────────────────────── */
+.series-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+.series-card h2 {
+  font-size: 1.25rem;
+  color: #38bdf8;
+  margin-bottom: 0.5rem;
+}
+
+.series-desc {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.episodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.episode-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.episode-number {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.episode-title {
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.episode-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+}
+
+.episode-status.available {
+  background: #14532d;
+  color: #86efac;
+}
+
+.episode-status.coming-soon {
+  background: #422006;
+  color: #fed7aa;
+}
+
+/* ── Status card ───────────────────────────────────── */
+.status-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.status-card h2 {
+  font-size: 1.2rem;
+  color: #38bdf8;
+  margin-bottom: 1rem;
+}
+
+.status-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-card li {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.tag {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tag.green {
+  background: #14532d;
+  color: #86efac;
+}
+
+/* ── Misc ──────────────────────────────────────────── */
+.loading {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.error {
+  color: #f87171;
+}
+
+/* ── Footer ────────────────────────────────────────── */
+.app-footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  border-top: 1px solid #1e293b;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.app-footer a {
+  color: #64748b;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  color: #94a3b8;
+}
