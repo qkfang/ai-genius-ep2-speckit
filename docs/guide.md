@@ -1,728 +1,555 @@
-# AI Genius Episode 2 — SpecKit: Practical DevOps Controls
+# AI Genius Season 4 Episode 2 — Spec-Kit with GitHub Copilot
 
-> **60-Minute Hands-On Session: Practical SpecKit DevOps — Turn Specs into CI/CD Controls**
+> **Hands-On Session: Spec-Driven Development using Spec-Kit and GitHub Copilot**
 >
-> This guide is written for the presenter. Every step has been tested and timed.
-> Follow the steps in order; each section includes the exact prompts, commands,
-> and expected output so you can demo confidently and recover quickly if anything
-> goes wrong.
+> This guide walks you through using [Spec-Kit](https://github.com/github/spec-kit) to
+> design and build the AI Genius application — a Node.js API backend and a React web
+> frontend — then deploy both to Azure using Bicep and GitHub Actions CI/CD.
 >
-> **Core message:** In many teams, CI/CD only validates code. In this session we
-> make the pipeline validate *intent*. The spec becomes a first-class DevOps
-> artifact that gates merges and releases.
+> **Core message:** Specifications become the source of truth. Code is their expression.
+> Deployment is the outcome.
 
 ---
 
-## ⏱️ Session Timeline
+## 🗺️ Session Overview
 
-| Section | Topic | Clock Time |
-|---------|-------|-----------|
-| [Part 1](#part-1--end-state-and-why-it-matters-05-min) | End State and Why It Matters | 0 – 5 min |
-| [Part 2](#part-2--the-change-spec-artifact-515-min) | The Change Spec Artifact | 5 – 15 min |
-| [Part 3](#part-3--enforce-spec-presence-in-ci-1525-min) | Enforce Spec Presence in CI | 15 – 25 min |
-| [Part 4](#part-4--extract-metadata-and-generate-a-summary-2540-min) | Extract Metadata and Generate a Summary | 25 – 40 min |
-| [Part 5](#part-5--apply-promotion-rules-4055-min) | Apply Promotion Rules | 40 – 55 min |
-| [Part 6](#part-6--live-demo-the-full-loop-5560-min) | Live Demo: The Full Loop | 55 – 60 min |
+| Step | Topic |
+|------|-------|
+| [Step 1](#step-1--install-specify-cli) | Install Specify CLI |
+| [Step 2](#step-2--define-your-constitution) | Define Your Constitution (`/speckit.constitution`) |
+| [Step 3](#step-3--create-the-spec) | Create the Spec (`/speckit.specify`) |
+| [Step 4](#step-4--clarify-the-spec) | Clarify the Spec (`/speckit.clarify`) |
+| [Step 5](#step-5--validate-the-spec) | Validate the Spec (`/speckit.checklist`) |
+| [Step 6](#step-6--create-a-technical-implementation-plan) | Create Implementation Plan (`/speckit.plan`) |
+| [Step 7](#step-7--generate-tasks) | Generate Tasks (`/speckit.tasks`) |
+| [Step 8](#step-8--analyze-and-validate) | Analyze and Validate (`/speckit.analyze`) |
+| [Step 9](#step-9--implement) | Implement (`/speckit.implement`) |
+| [Step 10](#step-10--cicd-deploy-to-azure) | CI/CD Deploy to Azure (Bicep + GitHub Actions) |
 
 ---
 
 ## Prerequisites
 
-Before the session starts, verify:
+Before starting, make sure you have:
+
+- **GitHub Copilot** subscription (individual, Business, or Enterprise)
+- **Python 3.8+** with `uv` (for installing Specify CLI)
+- **Node.js 20+** and `npm`
+- **Azure CLI** (`az`) — authenticated via `az login`
+- **Git** configured locally
+- The repository cloned locally or opened in GitHub Codespaces
 
 ```bash
-node --version   # must be >= 18 (ideally 20)
-npm --version
+# Verify prerequisites
+node --version   # >= 20
+python --version # >= 3.8
+az --version     # any recent version
 git --version
 ```
 
-You need:
-- The repository cloned locally (or opened in GitHub Codespaces / VS Code Dev Container)
-- A GitHub account with the repo forked (for the GitHub Actions live demo in Parts 3–6)
-
----
-
-## Part 1 — End State and Why It Matters (0–5 min)
-
-### Step 1.1 — Show the end state ⏱️ ~3 minutes
-
-**What to say:**
-> "Let me show you where we end up before we explain how we get there. This is the
-> repo we're working with — and by the end of this session, every PR into it will be
-> gated by a structured spec artifact, not tribal knowledge."
-
-Show the project tree (or walk through it in your editor):
-
-```
-ai-genius-ep2-speckit/
-├── specs/
-│   ├── app.spec.yaml        ← application lifecycle spec (runtime, stages)
-│   └── change.spec.yaml     ← 🎯 per-PR change spec: risk, breaking, promotion rules
-├── speckit/lib/
-│   ├── parser.js
-│   ├── validator.js
-│   ├── spec-extractor.js    ← extracts metadata and evaluates promotion gates
-│   └── pipeline-generator.js
-└── .github/workflows/
-    ├── spec-enforcer.yml    ← blocks PRs without a spec
-    └── spec-gate.yml        ← applies promotion rules before deployment
-```
-
-**Key message:**
-> "Two spec files, two new workflows, one new library module. That's all it takes to
-> make CI/CD validate intent instead of just code."
-
----
-
-### Step 1.2 — Install and verify ⏱️ ~2 minutes
+Install `uv` if you don't have it:
 
 ```bash
-git clone https://github.com/qkfang/ai-genius-ep2-speckit
-cd ai-genius-ep2-speckit
-npm install
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+---
+
+## Step 1 — Install Specify CLI
+
+The `specify` CLI scaffolds the spec-kit file structure and installs the `/speckit.*`
+slash commands into your AI agent. For GitHub Copilot, this writes prompt files into
+`.github/copilot-instructions.md` and the `.github/` commands directory.
+
+### Option A: Persistent Installation (Recommended)
+
+Install once, use everywhere:
+
+```bash
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+```
+
+Then initialise the project (run from the repo root):
+
+```bash
+# Initialise spec-kit in the current directory for GitHub Copilot
+specify init . --ai copilot
+```
+
+### Option B: One-time Initialisation
+
+Run directly without a global install:
+
+```bash
+uvx --from git+https://github.com/github/spec-kit.git specify init . --ai copilot
+```
+
+### Force PowerShell scripts (Windows)
+
+```bash
+specify init . --ai copilot --script ps
+```
+
+### Verify the installation
+
+```bash
+specify check
+```
+
+After initialisation, Copilot gains these slash commands in its context:
+
+| Command | Purpose |
+|---------|---------|
+| `/speckit.constitution` | Define project governing principles |
+| `/speckit.specify` | Describe what to build |
+| `/speckit.clarify` | Resolve ambiguities in the spec |
+| `/speckit.checklist` | Validate spec completeness |
+| `/speckit.plan` | Create a technical implementation plan |
+| `/speckit.tasks` | Generate an actionable task list |
+| `/speckit.analyze` | Cross-artifact consistency check |
+| `/speckit.implement` | Execute all tasks |
+
+> **Context Awareness:** Spec-Kit commands automatically detect the active feature based
+> on your current Git branch (e.g., `001-aigenius-app`). Switch features by switching branches.
+
+---
+
+## Step 2 — Define Your Constitution
+
+**In GitHub Copilot Chat**, use `/speckit.constitution` to establish the governing
+principles for this project. The constitution is committed to `specs/constitution.md` and
+guides every subsequent specification and implementation decision.
+
+```
+/speckit.constitution This project is the AI Genius demo application.
+It consists of a Node.js Express API backend and a React frontend.
+Core principles:
+- Security-first: all inputs validated, HTTPS only, no secrets in code.
+- Cloud-native: infrastructure is defined as code using Azure Bicep.
+- CI/CD-driven: every merge to main triggers automated build and deployment.
+- Simplicity: prefer standard libraries, avoid over-engineering.
+- Tested: API routes must have unit tests; frontend must build clean.
+```
+
+Copilot will generate `specs/constitution.md` with your project's articles and principles.
+Review and commit it.
+
+---
+
+## Step 3 — Create the Spec
+
+**In GitHub Copilot Chat**, use `/speckit.specify` to describe what you want to build.
+Focus on the **what** and **why** — not the tech stack.
+
+Spec-Kit will:
+1. Automatically determine the next feature number (e.g., `001`)
+2. Create a feature branch (`001-aigenius-app`)
+3. Generate `specs/001-aigenius-app/spec.md` from the template
+
+```
+/speckit.specify Build the AI Genius application.
+The application has two parts:
+1. A REST API that exposes a health endpoint and a status endpoint showing
+   the runtime environment, current timestamp, and application version.
+2. A React web frontend that displays the application name, links to the API
+   endpoints, and shows the live status returned by the API.
+Both components must be deployable to Azure — the API to Azure App Service
+and the frontend to Azure Static Web Apps. Infrastructure must be defined
+as Bicep templates so environments can be reproduced reliably.
+```
+
+Inspect the generated spec:
+
+```bash
+cat specs/001-aigenius-app/spec.md
+```
+
+---
+
+## Step 4 — Clarify the Spec
+
+**In GitHub Copilot Chat**, use `/speckit.clarify` to resolve any ambiguities.
+Run it once with a general focus, then again with specific concerns.
+
+**First pass — general clarification:**
+
+```
+/speckit.clarify Resolve all [NEEDS CLARIFICATION] markers in the spec.
+For the API: the health endpoint returns HTTP 200 with JSON { "status": "ok" }.
+The status endpoint returns the Node.js environment, timestamp, and app version.
+For the frontend: it calls the API status endpoint on load and renders the response.
+There is no user authentication in this initial version.
+```
+
+**Second pass — deployment and security details:**
+
+```
+/speckit.clarify Focus on deployment and security requirements.
+The API must run on Node.js 20 LTS. The App Service must enforce HTTPS only
+and disable FTP. The Static Web App uses the Free tier for development and
+Standard for production. All Azure resources are tagged with app, environment,
+and managedBy=bicep.
+```
+
+Review `specs/001-aigenius-app/spec.md` after each clarify pass to confirm the
+`[NEEDS CLARIFICATION]` markers are resolved.
+
+---
+
+## Step 5 — Validate the Spec
+
+**In GitHub Copilot Chat**, use `/speckit.checklist` to run a quality check on
+the specification before moving to implementation planning. This acts like a
+unit test for the English requirements.
+
+```
+/speckit.checklist
+```
+
+Copilot will report on:
+
+- ✅ No `[NEEDS CLARIFICATION]` markers remaining
+- ✅ All requirements are testable and unambiguous
+- ✅ Success criteria are measurable
+- ✅ Non-functional requirements (performance, security) are defined
+- ✅ Deployment target and environment strategy are specified
+
+Address any failing checklist items before continuing.
+
+---
+
+## Step 6 — Create a Technical Implementation Plan
+
+**In GitHub Copilot Chat**, use `/speckit.plan` to provide the tech stack and
+architecture choices. Spec-Kit translates the business requirements into a
+detailed technical implementation plan.
+
+```
+/speckit.plan
+The API is a Node.js 20 Express application in src/aigenius-api.
+The frontend is a React 18 app built with Vite in src/aigenius-web.
+Azure infrastructure is defined in bicep/main.bicep using two modules:
+  - bicep/modules/webapp.bicep: Azure App Service Plan (Linux B1) + Web App
+  - bicep/modules/staticwebapp.bicep: Azure Static Web App (Free tier)
+CI/CD is GitHub Actions. On every push to main:
+  1. Run Bicep to provision/update infrastructure.
+  2. Deploy the API to Azure App Service via zip deploy.
+  3. Build the React app and deploy to Azure Static Web App.
+Use OIDC (Workload Identity Federation) for Azure authentication — no
+long-lived credentials stored as secrets.
+```
+
+Spec-Kit generates into `specs/001-aigenius-app/`:
+
+| File | Contents |
+|------|----------|
+| `plan.md` | Full technical implementation plan |
+| `data-model.md` | Data structures and API schemas |
+| `contracts/` | API endpoint contracts |
+| `research.md` | Library choices and rationale |
+| `quickstart.md` | Key validation scenarios |
+
+---
+
+## Step 7 — Generate Tasks
+
+**In GitHub Copilot Chat**, use `/speckit.tasks` to generate an actionable task
+list from the implementation plan. Tasks are derived from the contracts, data
+model, and test scenarios.
+
+```
+/speckit.tasks
+```
+
+Spec-Kit reads `plan.md` and supporting documents to produce
+`specs/001-aigenius-app/tasks.md` with:
+
+- Tasks ordered by dependency
+- Independent tasks marked `[P]` (safe to run in parallel)
+- References to which contract or data-model entity each task implements
+
+Review `specs/001-aigenius-app/tasks.md` and adjust priorities if needed.
+
+---
+
+## Step 8 — Analyze and Validate
+
+**In GitHub Copilot Chat**, use `/speckit.analyze` to run a cross-artifact
+consistency check. This catches mismatches between the spec, plan, contracts,
+and tasks before any code is written.
+
+```
+/speckit.analyze
+```
+
+Copilot will check:
+
+- All API endpoints in `contracts/` are covered by tasks
+- Data models referenced in the plan match the contracts
+- The implementation phases have clear prerequisites and deliverables
+- No speculative or "might need" features crept in
+
+Address any inconsistencies reported before proceeding.
+
+---
+
+## Step 9 — Implement
+
+**In GitHub Copilot Chat**, use `/speckit.implement` to execute the task list and
+build the feature. For complex projects, implement in phases to avoid overwhelming
+the agent's context.
+
+```
+/speckit.implement
+```
+
+> **Phased Implementation Tip:** For this project, consider two phases:
+> - **Phase 1:** API — Express routes, health endpoint, status endpoint, tests
+> - **Phase 2:** Frontend — React app, Vite config, API integration, build
+
+After implementation, verify locally:
+
+```bash
+# Test the API
+cd src/aigenius-api
+npm ci
 npm test
-```
+npm start        # Runs on http://localhost:3000
 
-**Expected output:**
-```
-Tests:       57 passed, 57 total
-Test Suites: 2 passed, 2 total
-Time:        ~0.9s
+# Verify endpoints
+curl http://localhost:3000/health
+curl http://localhost:3000/api/status
+
+# Build the frontend
+cd ../aigenius-web
+npm ci
+npm run build    # Output in dist/
+npm run preview  # Preview at http://localhost:4173
 ```
 
 ---
 
-## Part 2 — The Change Spec Artifact (5–15 min)
+## Step 10 — CI/CD: Deploy to Azure
 
-### Step 2.1 — Introduce the concept ⏱️ ~2 minutes
+With the application built, set up automated deployment to Azure using the
+`deploy.yml` GitHub Actions workflow and the Bicep templates in `bicep/`.
 
-**What to say:**
-> "Most CI/CD pipelines validate that the code builds and tests pass. That's necessary
-> but not sufficient. We also want to know: what is this change? Is it risky? Does it
-> break existing contracts? What environments is it allowed to reach?
->
-> We answer those questions with a *change spec* — a small YAML file committed with
-> every pull request."
+### 10.1 — Set up Azure OIDC Authentication
 
----
-
-### Step 2.2 — Open and read the change spec ⏱️ ~5 minutes
+Instead of storing long-lived credentials, the workflow uses **OIDC (Workload Identity
+Federation)** — GitHub's identity is federated directly to Azure.
 
 ```bash
-cat specs/change.spec.yaml
+# 1. Create a service principal
+az ad app create --display-name "ai-genius-github-actions"
+APP_ID=$(az ad app list --display-name "ai-genius-github-actions" --query "[0].appId" -o tsv)
+
+# 2. Create the federated credential for the main branch
+az ad app federated-credential create \
+  --id $APP_ID \
+  --parameters '{
+    "name": "github-main",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:YOUR_ORG/YOUR_REPO:ref:refs/heads/main",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
+
+# 3. Create the service principal and assign Contributor role
+az ad sp create --id $APP_ID
+SP_ID=$(az ad sp show --id $APP_ID --query id -o tsv)
+az role assignment create \
+  --assignee $SP_ID \
+  --role Contributor \
+  --scope /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP
 ```
 
-Walk through each section:
+### 10.2 — Configure GitHub Secrets and Variables
 
-**1. What is this change?**
+In your GitHub repository, go to **Settings → Secrets and variables → Actions** and add:
+
+**Secrets:**
+
+| Secret | Value |
+|--------|-------|
+| `AZURE_CLIENT_ID` | App registration client ID |
+| `AZURE_TENANT_ID` | Azure tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | *(Optional — only if not using Bicep output)* |
+
+**Variables:**
+
+| Variable | Example value |
+|----------|---------------|
+| `AZURE_RESOURCE_GROUP` | `rg-aigenius-prod` |
+| `AZURE_LOCATION` | `eastus` |
+| `APP_NAME` | `aigenius` |
+
+### 10.3 — Deploy Bicep Infrastructure
+
+The `deploy.yml` workflow provisions all Azure infrastructure in the `infra` job.
+You can also run Bicep manually for the first-time setup:
+
+```bash
+# Log in to Azure
+az login
+
+# Create the resource group
+az group create \
+  --name rg-aigenius-dev \
+  --location eastus
+
+# Deploy infrastructure (development)
+az deployment group create \
+  --resource-group rg-aigenius-dev \
+  --template-file bicep/main.bicep \
+  --parameters appName=aigenius environment=development
+
+# Deploy infrastructure (production)
+az deployment group create \
+  --resource-group rg-aigenius-prod \
+  --template-file bicep/main.bicep \
+  --parameters appName=aigenius environment=production appServicePlanSku=B1
+```
+
+**Resources provisioned by Bicep:**
+
+| Resource | Bicep module | Purpose |
+|----------|-------------|---------|
+| Azure App Service Plan (Linux B1) | `modules/webapp.bicep` | Compute plan for the API |
+| Azure App Service | `modules/webapp.bicep` | Hosts `src/aigenius-api` |
+| Azure Static Web App | `modules/staticwebapp.bicep` | Hosts built `src/aigenius-web` |
+
+### 10.4 — CI/CD Workflow: `deploy.yml`
+
+The `deploy.yml` workflow triggers on every push to `main` and runs three jobs in order:
+
+```
+infra  ──┬──▶  deploy-api
+         └──▶  deploy-web
+```
+
+**Job 1 — `infra`: Provision infrastructure via Bicep**
+
 ```yaml
-change:
-  title: "Add user-facing health dashboard endpoint"
-  type: feature        # feature | fix | chore | breaking | release
-  description: >
-    Adds a new /api/dashboard route...
-```
-> "The `title` and `type` give reviewers immediate context. No more reading 20 commit
-> messages to understand what a PR does."
-
-**2. Risk assessment:**
-```yaml
-  risk: low              # low | medium | high
-  breaking: false
-```
-> "The author declares risk level and whether existing contracts are broken. The pipeline
-> trusts this but also *enforces consequences* — a `breaking: true` flag blocks production."
-
-**3. Affected components:**
-```yaml
-  components:
-    - name: api-gateway
-      impact: modified
-    - name: health-service
-      impact: new
-```
-> "Explicitly listing touched components is useful for reviewers and for post-incident
-> analysis. Which PRs touched the payment service last week? Now you can query the specs."
-
-**4. Promotion rules:**
-```yaml
-  promotion:
-    require_approvals: 1
-    require_passing_tests: true
-    environments:
-      - staging
-      - production
-```
-> "The change spec declares where it *wants* to go and what gates must pass. The pipeline
-> enforces it."
-
----
-
-### Step 2.3 — Validate the change spec ⏱️ ~1 minute
-
-**What to say:**
-> "SpecKit can validate the change spec just like it validates the app spec."
-
-```bash
-npm run speckit:extract
+- Azure Login (OIDC)
+- Create resource group if it does not exist
+- az deployment group create bicep/main.bicep
+- Output: nodeAppName, staticWebAppToken
 ```
 
-**Expected output:**
-```
-📊 SpecKit › Extracting metadata from: .../specs/change.spec.yaml
-
-─── Change Metadata ───────────────────────────────
-  Title:    Add user-facing health dashboard endpoint
-  Type:     feature
-  Risk:     LOW
-  Breaking: No
-  Rationale: Low-risk change — isolated, additive, and fully tested.
-
-─── Affected Components ───────────────────────────
-  • api-gateway (modified)
-  • health-service (new)
-
-─── Promotion Rules ───────────────────────────────
-  Required approvals:    1
-  Passing tests:         true
-  Security scan:         false
-  Environments:          staging → production
-```
-
----
-
-### Step 2.4 — Intentionally break the spec ⏱️ ~3 minutes (interactive demo)
-
-**What to say:**
-> "Let's see what happens when a developer forgets a required field."
-
-Edit `specs/change.spec.yaml` — remove the `risk` line:
+**Job 2 — `deploy-api`: Deploy Node.js API to Azure App Service**
 
 ```yaml
-change:
-  title: "Add dashboard"
-  type: feature
-  # risk: low   ← removed
-  breaking: false
+- npm ci --omit=dev          # production dependencies only
+- zip src/aigenius-api/
+- azure/webapps-deploy@v3    # zip deploy to App Service
 ```
 
-Then run:
-```bash
-npm run speckit:extract
-```
+**Job 3 — `deploy-web`: Build and deploy React app to Azure Static Web App**
 
-**Expected output:**
-```
-❌ Change spec validation failed with 1 error(s):
-
-  • change.risk is required
-```
-
-> "Immediate, local feedback — before any CI job runs."
-
-**Restore the spec:**
-```bash
-git checkout specs/change.spec.yaml
-```
-
----
-
-## Part 3 — Enforce Spec Presence in CI (15–25 min)
-
-### Step 3.1 — Overview of the spec-enforcer workflow ⏱️ ~2 minutes
-
-**What to say:**
-> "Validation locally is useful. But we need the *pipeline* to enforce spec presence.
-> If a developer opens a PR without a change spec, the build should fail."
-
-Open `.github/workflows/spec-enforcer.yml`.
-
-**Key sections to highlight:**
-
-**The spec presence check:**
 ```yaml
-- name: Check spec file exists
-  run: |
-    if [ ! -f "${{ env.SPEC_FILE }}" ]; then
-      echo "❌ Change spec not found"
-      echo "Every PR must include specs/change.spec.yaml"
-      exit 1
-    fi
-```
-> "This is the first gate. The job fails immediately if the spec file is missing. No spec,
-> no merge."
-
-**Validate, extract, comment:**
-```yaml
-- name: Validate change spec
-  run: |
-    node -e "
-      const { parseSpec } = require('./speckit/lib/parser');
-      const { validateChangeSpec } = require('./speckit/lib/spec-extractor');
-      ...
-    "
-
-- name: Post PR comment
-  uses: actions/github-script@v7
-  with:
-    script: |
-      // Posts the spec summary as a PR comment
-```
-> "After validating, the workflow generates a spec summary and posts it as a PR comment.
-> Reviewers see risk level, breaking flag, and affected components without opening any files."
-
----
-
-### Step 3.2 — What reviewers see on the PR ⏱️ ~2 minutes
-
-Show (or mock) a GitHub PR comment that the workflow would post:
-
-```markdown
-### 📋 SpecKit Change Spec Summary
-
-## Change Details
-
-| Field | Value |
-|---|---|
-| **Title** | Add user-facing health dashboard endpoint |
-| **Type** | `feature` |
-| **Risk** | 🟢 LOW |
-| **Breaking** | ✅ No |
-
-> Low-risk change — isolated, additive, and fully tested.
-
-## Affected Components
-
-| Component | Impact |
-|---|---|
-| `api-gateway` | ✏️ modified |
-| `health-service` | 🆕 new |
-
-## Promotion Gate Results
-
-| Environment | Status | Notes |
-|---|---|---|
-| staging    | 🟢 Clear | All gates passed |
-| production | 🟢 Clear | All gates passed |
+- npm ci && npm run build    # Vite produces dist/
+- Azure/static-web-apps-deploy@v1
 ```
 
-> "The reviewer doesn't need to read the spec file — the pipeline extracts and formats
-> it for them. Intent is visible at the top of every PR."
+### 10.5 — Trigger a Deployment
 
----
-
-### Step 3.3 — Walk through the spec-enforcer flow ⏱️ ~4 minutes
-
-**Walk through these jobs in order:**
-
-1. `Check spec file exists` — hard fail if missing
-2. `Validate change spec` — schema validation
-3. `Extract spec metadata` — outputs `risk_level`, `is_breaking`, `component_count`
-4. `Generate summary artifact` — calls `speckit extract --output /tmp/spec-summary.md`
-5. `Post PR comment` — uses `actions/github-script@v7` to upsert a comment
-6. `Upload spec summary artifact` — persists the summary for 30 days
-
-**Key talking point:**
-> "Notice we upload the spec summary as a GitHub Actions artifact. This creates an audit
-> trail — you can always look back at what the author declared for any past deployment."
-
----
-
-### Step 3.4 — Trigger manually ⏱️ ~1 minute
-
-**How to trigger on GitHub:**
-1. Go to **Actions** tab
-2. Select **"Spec Enforcer — Require Change Spec on PRs"**
-3. Click **"Run workflow"**
-4. Optionally change the spec file path
-5. Click **"Run workflow"**
-
----
-
-## Part 4 — Extract Metadata and Generate a Summary (25–40 min)
-
-### Step 4.1 — Walk through `spec-extractor.js` ⏱️ ~6 minutes
-
-**What to say:**
-> "Let's look at the library module that does all the extraction. This is the brain
-> behind both the spec-enforcer and the spec-gate workflows."
-
-Open `speckit/lib/spec-extractor.js`.
-
-**Key functions to highlight:**
-
-**`validateChangeSpec(spec)`** (line ~26):
-```javascript
-function validateChangeSpec(spec) {
-  const errors = [];
-  if (!spec.change) { errors.push('...'); return { valid: false, errors }; }
-  // validates title, type, risk, breaking, components, promotion
-}
-```
-> "Separate from the app spec validator — change specs have different required fields."
-
-**`extractRisk(spec)`** (line ~95):
-```javascript
-function extractRisk(spec) {
-  const risk = c.risk || 'unknown';
-  const breaking = c.breaking === true;
-  // Generates a rationale string based on risk + breaking
-  return { risk, breaking, type, rationale };
-}
-```
-> "The rationale is what goes into the PR comment. It translates the spec field into
-> a human-readable explanation."
-
-**`evaluatePromotionGate(spec, environment)`** (line ~138):
-```javascript
-function evaluatePromotionGate(spec, environment) {
-  if (environment === 'production') {
-    if (breaking)   reasons.push('Breaking changes require manual approval...');
-    if (risk === 'high') reasons.push('High-risk changes require additional review...');
-  }
-  return { blocked: reasons.length > 0, reasons };
-}
-```
-> "This is the gate logic. It returns `{ blocked: true, reasons: [...] }`. The workflow
-> reads this and decides whether to proceed."
-
-**`generateSummary(spec)`** (line ~165):
-> "Generates the full Markdown summary — the same text posted as a PR comment and
-> uploaded as an artifact."
-
----
-
-### Step 4.2 — Run the extract command with gate evaluation ⏱️ ~2 minutes
+Push to `main` to trigger the full pipeline automatically:
 
 ```bash
-# Check the staging gate
-node speckit/index.js extract specs/change.spec.yaml --env staging
-
-# Check the production gate
-node speckit/index.js extract specs/change.spec.yaml --env production
-```
-
-**Expected output (production):**
-```
-🟢 CLEAR — all promotion gates passed
-```
-
-Now temporarily change `risk: high` in `specs/change.spec.yaml`:
-
-```bash
-node speckit/index.js extract specs/change.spec.yaml --env production
-```
-
-**Expected output:**
-```
-🔴 BLOCKED — 1 reason(s):
-   • High-risk changes require additional review before production deployment
-```
-
-Exit code is `2` (non-zero) — GitHub Actions can use this to block the job.
-
-**Restore:**
-```bash
-git checkout specs/change.spec.yaml
-```
-
----
-
-### Step 4.3 — Generate and inspect the summary artifact ⏱️ ~3 minutes
-
-```bash
-node speckit/index.js extract specs/change.spec.yaml --output /tmp/spec-summary.md
-cat /tmp/spec-summary.md
-```
-
-**Point out:**
-- The full Markdown table with all fields
-- The Promotion Gate Results section with 🟢/🔴 status for each environment
-- The References section linking to closed issues
-
-> "This artifact is what you archive for compliance. It answers: for this release,
-> who declared what risk level, which components were affected, and were all gates clear?"
-
----
-
-### Step 4.4 — Run the full test suite to see extractor coverage ⏱️ ~1 minute
-
-```bash
-npm run test:coverage
-```
-
-Point out the `speckit/lib/spec-extractor.js` row in the coverage table.
-
-> "We went from 32 to 57 tests. The 25 new tests cover the extractor: schema validation,
-> risk extraction, gate evaluation, and summary generation."
-
----
-
-## Part 5 — Apply Promotion Rules (40–55 min)
-
-### Step 5.1 — Overview of the spec-gate workflow ⏱️ ~3 minutes
-
-**What to say:**
-> "The spec-enforcer runs on PRs and posts a comment. The spec-gate workflow runs on
-> push and controls deployment. It reads the spec and gates the deploy jobs."
-
-Open `.github/workflows/spec-gate.yml`.
-
-**Key structure:**
-```yaml
-jobs:
-  spec-gate:     # reads spec, evaluates gates, sets outputs
-  ci:            # runs lint + test (always)
-  deploy-staging:
-    needs: [spec-gate, ci]
-    if: needs.spec-gate.outputs.staging_blocked != 'true'
-  deploy-production:
-    needs: [spec-gate, deploy-staging]
-    if: needs.spec-gate.outputs.production_blocked != 'true'
-```
-> "The gate job runs first and sets `staging_blocked` and `production_blocked` outputs.
-> Downstream jobs read those outputs via `if:` conditions. If the spec says 'blocked',
-> the deploy job is skipped entirely."
-
----
-
-### Step 5.2 — Walk through the gate job steps ⏱️ ~5 minutes
-
-**The check-exists step:**
-```yaml
-- name: Check spec file exists
-  run: |
-    if [ ! -f "${{ env.SPEC_FILE }}" ]; then
-      echo "⚠️  No change spec found — using safe defaults"
-    fi
-```
-> "The gate is lenient on push if no spec exists — it uses safe defaults (low risk, not
-> breaking). The *enforcer* on the PR is strict. This two-workflow pattern lets you
-> adopt controls incrementally."
-
-**The extract step:**
-```yaml
-- name: Extract spec metadata
-  id: extract
-  run: |
-    node -e "
-      const { extractRisk, extractPromotionRules } = require('./speckit/lib/spec-extractor');
-      const { risk, breaking, type } = extractRisk(spec);
-      console.log('risk_level=' + risk);
-      console.log('is_breaking=' + breaking);
-      ..." | tee -a "$GITHUB_OUTPUT"
-```
-> "Job outputs in GitHub Actions are key=value pairs written to `$GITHUB_OUTPUT`.
-> Downstream jobs read them with `needs.spec-gate.outputs.risk_level`."
-
-**The gate evaluation step:**
-```yaml
-- name: Evaluate promotion gates
-  id: gate
-  run: |
-    node -e "
-      const staging = evaluatePromotionGate(spec, 'staging');
-      const production = evaluatePromotionGate(spec, 'production');
-      console.log('staging_blocked=' + staging.blocked);
-      console.log('production_blocked=' + production.blocked);
-    " | tee -a "$GITHUB_OUTPUT"
-```
-> "One Node.js call, two outputs. These are the levers that downstream deploy jobs check."
-
----
-
-### Step 5.3 — Demo: breaking change blocks production ⏱️ ~5 minutes
-
-**What to say:**
-> "Let's see the gate in action. I'll change `breaking: true` in the change spec
-> and watch the production deploy job get blocked."
-
-Edit `specs/change.spec.yaml`:
-```yaml
-  breaking: true   # ← was false
-```
-
-Check the production gate locally:
-```bash
-node speckit/index.js extract specs/change.spec.yaml --env production
-```
-
-**Expected output:**
-```
-🔴 BLOCKED — 1 reason(s):
-   • Breaking changes require manual approval before production deployment
-```
-
-Then commit and push to trigger the workflow on GitHub:
-```bash
-git add specs/change.spec.yaml
-git commit -m "demo: mark change as breaking to show gate"
-git push
-```
-
-On GitHub:
-1. Go to **Actions** tab
-2. Watch **"Spec Gate — Apply Promotion Rules"** run
-3. Click into the run — you will see:
-   - `spec-gate` job: `production_blocked=true`
-   - `deploy-staging` job: ✅ runs normally
-   - `deploy-production` job: ⏭️ skipped (condition was false)
-4. Click the gate summary artifact — the Markdown summary shows `🔴 Blocked` for production
-
-**Key talking point:**
-> "The developer declared `breaking: true`. The pipeline enforced the consequence —
-> production was skipped. No YAML knowledge required. No manual reviewer needed to
-> catch it. The spec did the work."
-
-**Restore:**
-```bash
-git checkout specs/change.spec.yaml
-git push
-```
-
----
-
-### Step 5.4 — Demo: high risk blocks production ⏱️ ~3 minutes
-
-Edit `specs/change.spec.yaml`:
-```yaml
-  risk: high   # ← was low
-  breaking: false
-```
-
-```bash
-node speckit/index.js extract specs/change.spec.yaml --env production
-```
-
-**Expected:**
-```
-🔴 BLOCKED — 1 reason(s):
-   • High-risk changes require additional review before production deployment
-```
-
-> "Two independent controls: `breaking` and `risk`. Both can gate production.
-> Both are declared by the author. Both are enforced by the pipeline."
-
-**Restore:**
-```bash
-git checkout specs/change.spec.yaml
-```
-
----
-
-### Step 5.5 — Show the gate summary artifact ⏱️ ~2 minutes
-
-After the workflow runs, go to the GitHub Actions run page:
-1. Click into the `spec-gate` job
-2. Click **Artifacts** in the top-right
-3. Download **spec-gate-summary**
-4. Open the Markdown file
-
-Show the Promotion Gate Results table with both environments.
-
-**Key talking point:**
-> "Every deployment now has an attached spec summary. Audit trail, risk declaration,
-> and gate results — all in one artifact, stored for 30 days."
-
----
-
-## Part 6 — Live Demo: The Full Loop (55–60 min)
-
-### Step 6.1 — Open a PR without a spec ⏱️ ~2 minutes
-
-**What to say:**
-> "Let's prove the enforcer catches missing specs. I'll create a branch, make a small
-> code change, open a PR, and intentionally leave out the change spec."
-
-```bash
-git checkout -b demo/no-spec
-# Make a trivial code change
-echo "// demo" >> src/app.js
-git add src/app.js
-git commit -m "demo: code change without spec"
-git push -u origin demo/no-spec
-```
-
-Open a PR from `demo/no-spec` → `main` on GitHub.
-
-Watch **"Spec Enforcer"** fail:
-```
-❌ Change spec not found: specs/change.spec.yaml
-   Every pull request must include a change spec...
-```
-
-> "The merge is blocked. No spec, no merge. The pipeline validates intent."
-
-**Cleanup:**
-```bash
-git checkout main
-git branch -D demo/no-spec
-git push origin --delete demo/no-spec
-```
-
----
-
-### Step 6.2 — Open a PR with a complete spec ⏱️ ~2 minutes
-
-```bash
-git checkout -b demo/with-spec
-echo "// demo" >> src/app.js
-# Change spec is already in place — leave it as-is
 git add .
-git commit -m "demo: code change with spec"
-git push -u origin demo/with-spec
+git commit -m "feat: initial AI Genius app"
+git push origin main
 ```
 
-Open a PR from `demo/with-spec` → `main`.
+Or trigger manually from the **Actions** tab:
 
-Watch **"Spec Enforcer"** pass and post the PR comment with:
-- Risk level and breaking status
-- Affected components
-- Promotion gate results
+1. Go to **Actions** → **Deploy to Azure**
+2. Click **Run workflow**
+3. Select the target environment (`staging` or `production`)
+4. Click **Run workflow**
 
-**Key talking point:**
-> "The reviewer immediately sees: low risk, no breaking change, both gates clear.
-> They can make an informed decision without reading the code."
+### 10.6 — Verify the Deployment
 
-**Cleanup:**
+After the workflow completes, verify each component:
+
 ```bash
-git checkout main
-git branch -D demo/with-spec
-git push origin --delete demo/with-spec
+# Check App Service is running
+curl https://aigenius-nodeapp-production.azurewebsites.net/health
+
+# Expected response:
+# { "status": "ok" }
+
+curl https://aigenius-nodeapp-production.azurewebsites.net/api/status
+
+# Expected response:
+# { "status": "running", "environment": "production", "timestamp": "..." }
+```
+
+The Static Web App URL is printed in the **Bicep Outputs** section of the workflow
+step summary. Open it in your browser to verify the frontend loads and calls the API.
+
+---
+
+## Project Structure
+
+```
+ai-genius-s4-ep2-speckit/
+│
+├── bicep/
+│   ├── main.bicep                  # Orchestrates all modules
+│   ├── README.md                   # Bicep usage reference
+│   └── modules/
+│       ├── staticwebapp.bicep      # Azure Static Web App
+│       └── webapp.bicep            # Azure App Service + Plan
+│
+├── src/
+│   ├── aigenius-api/               # Node.js Express API
+│   │   ├── app.js                  # Express app (health, status endpoints)
+│   │   ├── package.json
+│   │   └── routes/
+│   │       └── health.js
+│   │
+│   └── aigenius-web/               # React + Vite frontend
+│       ├── index.html
+│       ├── vite.config.js
+│       ├── package.json
+│       └── src/
+│           ├── App.jsx
+│           └── main.jsx
+│
+├── specs/                          # Generated by spec-kit (git-tracked)
+│   ├── constitution.md             # Project governing principles
+│   └── 001-aigenius-app/
+│       ├── spec.md                 # Feature requirements
+│       ├── plan.md                 # Technical implementation plan
+│       ├── data-model.md           # Data structures
+│       ├── contracts/              # API endpoint contracts
+│       ├── research.md             # Library choices and rationale
+│       ├── quickstart.md           # Validation scenarios
+│       └── tasks.md                # Actionable task list
+│
+└── .github/
+    └── workflows/
+        ├── ci.yml                  # Build & test on every PR
+        └── deploy.yml              # Provision Bicep + deploy to Azure on main
 ```
 
 ---
 
-### Step 6.3 — Closing message ⏱️ ~1 minute
+## Bicep Parameters Reference
 
-**What to say:**
-> "Let's recap what we built in 60 minutes:
->
-> 1. A **change spec** — a small, structured YAML artifact committed with every PR.
-> 2. A **spec-enforcer** workflow — blocks PRs without a spec, posts a summary comment.
-> 3. A **spec-extractor** module — extracts risk, breaking-change, and promotion rules.
-> 4. A **spec-gate** workflow — evaluates promotion gates and blocks deploys when needed.
->
-> The pipeline now validates *intent*, not just code. Merges and releases are gated by
-> clear, reviewable requirements. Not tribal knowledge."
-
----
-
-## Quick Reference — All Commands
-
-| Command | What it does | Typical time |
-|---------|-------------|-------------|
-| `npm install` | Install all dependencies | ~3–15 s |
-| `npm test` | Run all 57 Jest tests | ~0.9 s |
-| `npm run test:coverage` | Tests + coverage report | ~1 s |
-| `npm run lint` | ESLint check | ~0.4 s |
-| `npm run speckit:validate` | Validate `specs/app.spec.yaml` | ~0.15 s |
-| `npm run speckit:extract` | Extract metadata from `specs/change.spec.yaml` | ~0.1 s |
-| `npm run speckit:generate` | Generate pipeline YAML | ~0.16 s |
-| `npm run speckit:run` | Full agentic loop: parse → validate → generate | ~0.06 s |
-| `npm start` | Start Express.js API on port 3000 | < 1 s |
-| `node speckit/index.js extract specs/change.spec.yaml --env production` | Evaluate production gate | ~0.1 s |
-| `node speckit/index.js extract specs/change.spec.yaml -o /tmp/summary.md` | Generate summary to file | ~0.1 s |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `appName` | `aigenius` | Base name for all Azure resources |
+| `location` | resource group location | Azure region |
+| `environment` | `development` | `development`, `staging`, or `production` |
+| `appServicePlanSku` | `B1` | App Service Plan SKU (`F1`, `B1`, `B2`, `S1`) |
+| `staticWebAppSku` | `Free` | Static Web App tier (`Free` or `Standard`) |
 
 ---
 
@@ -730,78 +557,25 @@ git push origin --delete demo/with-spec
 
 | Problem | Fix |
 |---------|-----|
-| `npm install` fails | Check `node --version` must be ≥ 18 |
-| Tests fail | Run `npm install` first |
-| Spec validation fails | Read the error — it names the exact field |
-| Port 3000 in use | `PORT=3001 npm start` |
-| Gate shows blocked unexpectedly | Run `npm run speckit:extract` locally to see the reason |
-| PR comment not posted | Check `GITHUB_TOKEN` permissions (`pull-requests: write`) |
+| `specify init` fails | Ensure Python 3.8+ and `uv` are installed |
+| `/speckit.*` commands not available in Copilot | Re-run `specify init . --ai copilot`; reload VS Code |
+| `npm ci` fails in API | Check `node --version` is ≥ 18 |
+| Vite build fails | Check `node --version` is ≥ 18; run `npm ci` first |
+| `az login` fails | Check Azure CLI is installed and network allows Azure endpoints |
+| Bicep deploy fails | Ensure the resource group exists and the service principal has Contributor role |
+| App Service deploy fails | Verify `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` secrets are set |
+| Static Web App deploy fails | Check `AZURE_STATIC_WEB_APPS_API_TOKEN` secret or Bicep output token |
+| OIDC login fails | Confirm the federated credential `subject` matches your repo path exactly |
 
 ---
 
-## SpecKit CLI Reference
+## Key Principles (from Spec-Driven Development)
 
-```
-Usage: node speckit/index.js <command> <spec-file> [options]
+> Read the full methodology at
+> [github.com/github/spec-kit/blob/main/spec-driven.md](https://github.com/github/spec-kit/blob/main/spec-driven.md)
 
-Commands:
-  validate <spec>              Validate an app spec file
-  generate <spec> [options]    Generate GitHub Actions workflow
-    -o, --output <file>          Write to file (default: stdout)
-    --dry-run                    Print to stdout without writing
-  run <spec>                   Validate + generate + print full summary
-  extract <spec> [options]     Extract metadata from a change spec
-    -o, --output <file>          Write Markdown summary to file
-    --env <environment>          Evaluate promotion gate for environment
-
-Examples:
-  node speckit/index.js validate specs/app.spec.yaml
-  node speckit/index.js extract specs/change.spec.yaml
-  node speckit/index.js extract specs/change.spec.yaml --env production
-  node speckit/index.js extract specs/change.spec.yaml -o /tmp/summary.md
-  node speckit/index.js generate specs/app.spec.yaml --dry-run
-  node speckit/index.js run specs/app.spec.yaml
-```
-
----
-
-## Change Spec Reference
-
-```yaml
-# ── Required ──────────────────────────────────────────────────
-change:
-  title: string                 # Change title
-  type: feature|fix|chore|breaking|release
-  risk: low|medium|high
-  breaking: true|false
-
-# ── Optional ──────────────────────────────────────────────────
-  description: string
-
-  components:
-    - name: string              # Required per component
-      impact: new|modified|removed
-
-  promotion:
-    require_approvals: 1
-    require_passing_tests: true
-    require_security_scan: false
-    environments:
-      - staging
-      - production
-
-  refs:
-    - "closes #42"
-```
-
----
-
-## Promotion Gate Rules
-
-| Spec field | Staging | Production |
-|---|---|---|
-| `risk: low`, `breaking: false` | 🟢 Clear | 🟢 Clear |
-| `risk: medium`, `breaking: false` | 🟢 Clear | 🟢 Clear |
-| `risk: high`, `breaking: false` | 🟢 Clear | 🔴 Blocked |
-| `risk: any`, `breaking: true` | 🟢 Clear | 🔴 Blocked |
-| environment not in `promotion.environments` | 🔴 Blocked | 🔴 Blocked |
+- **Specifications as the Lingua Franca** — the spec is the source of truth; code is its expression
+- **Executable Specifications** — precise enough to generate working systems
+- **Continuous Refinement** — use `/speckit.clarify` and `/speckit.checklist` iteratively
+- **Research-Driven Context** — `/speckit.plan` gathers technical context before implementation
+- **Bidirectional Feedback** — production incidents feed back into spec evolution

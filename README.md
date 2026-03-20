@@ -1,276 +1,163 @@
-# AI Genius Episode 2 — SpecKit: Practical DevOps Controls
+# AI Genius Season 4 Episode 2 — Spec-Kit with GitHub Copilot
 
-> **Practical SpecKit DevOps: Turn Specs into CI/CD Controls with GitHub Actions**
->
-> A hands-on streaming demo showing how a small, structured spec artifact
-> can become a first-class input to DevOps automation — so merges and
-> releases are gated by clear, reviewable requirements, not tribal knowledge.
+> **Spec-Driven Development with GitHub Copilot, then deploy to Azure using Bicep and GitHub Actions.**
 
 ---
 
-## 📋 Session Overview
+## 📋 Overview
 
-In many teams, CI/CD only validates code.
-In this episode you will learn how to make the pipeline **validate intent**.
-Using **SpecKit** and **GitHub Actions** you will create a structured spec
-artifact for each change, wire the pipeline to enforce its presence, extract
-risk and breaking-change metadata, generate a summary artifact, and apply
-promotion rules that gate staging and production deployments.
+This repository demonstrates how to use [Spec-Kit](https://github.com/github/spec-kit) with
+**GitHub Copilot** to design the AI Genius application spec-first, then deploy it to Azure
+using **Bicep** (Infrastructure as Code) and **GitHub Actions** CI/CD.
 
-### You Will Learn
+**What you will do:**
 
-- Why specs belong in version control alongside code
-- How to enforce spec presence in CI so PRs without a spec are blocked
-- How to extract risk level and breaking-change metadata from a spec
-- How to generate an auditable summary artifact from a spec
-- How to apply promotion rules that gate deployment to each environment
-
-### Technologies Used
-
-| Technology | Role |
-|---|---|
-| **SpecKit** | Spec parser, validator, extractor, and pipeline generator |
-| **GitHub Actions** | CI/CD runner and spec-enforcement host |
-| **Node.js 20** | Runtime for the sample app and SpecKit engine |
-| **Express.js** | Sample application API |
-| **js-yaml** | YAML parsing for specs |
-| **Jest** | Testing framework |
+1. Install the `specify` CLI and initialise spec-kit for GitHub Copilot
+2. Use `/speckit.*` slash commands in Copilot Chat to define, clarify, plan, and implement the application
+3. Deploy the Node.js API to **Azure App Service** and the React frontend to **Azure Static Web Apps** via GitHub Actions
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-ai-genius-ep2-speckit/
+ai-genius-s4-ep2-speckit/
 │
-├── specs/
-│   ├── app.spec.yaml          # Application lifecycle spec (runtime, stages)
-│   └── change.spec.yaml       # 🎯 Per-PR change spec — risk, breaking, promotion rules
+├── bicep/
+│   ├── main.bicep                  # Orchestrates all Azure modules
+│   └── modules/
+│       ├── staticwebapp.bicep      # Azure Static Web App (React frontend)
+│       └── webapp.bicep            # Azure App Service + Plan (Node.js API)
 │
 ├── src/
-│   ├── app.js                 # Sample Express.js API application
-│   └── routes/
-│       └── health.js          # Health-check route
+│   ├── aigenius-api/               # Node.js Express API
+│   └── aigenius-web/               # React + Vite frontend
 │
-├── speckit/
-│   ├── index.js               # SpecKit CLI entry point
-│   └── lib/
-│       ├── parser.js          # Reads & parses spec YAML files
-│       ├── validator.js       # Validates app spec structure & values
-│       ├── spec-extractor.js  # 🧠 Extracts risk/breaking metadata, evaluates gates
-│       └── pipeline-generator.js  # Turns app spec into pipeline YAML
-│
-├── tests/
-│   ├── app.test.js            # Express app tests
-│   └── speckit.test.js        # SpecKit engine tests (57 tests)
+├── specs/                          # Spec-Kit generated specs (git-tracked)
 │
 └── .github/
     └── workflows/
-        ├── ci.yml                    # Standard CI workflow
-        ├── spec-enforcer.yml         # 🔒 Enforce spec presence on every PR
-        ├── spec-gate.yml             # 🚦 Apply promotion rules from spec
-        ├── spec-driven-pipeline.yml  # Agentic spec-driven pipeline
-        └── generate-pipeline.yml     # Auto-generates pipeline when spec changes
+        ├── ci.yml                  # Build & test on every PR/push
+        └── deploy.yml              # Provision Bicep + deploy to Azure on main
 ```
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Quick Start
+
+### 1. Install Specify CLI and set up GitHub Copilot commands
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/qkfang/ai-genius-ep2-speckit
-cd ai-genius-ep2-speckit
-npm install
+# Install uv (if needed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. Validate the app spec
-npm run speckit:validate
+# Install specify (persistent)
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
-# 3. Extract metadata from the change spec
-npm run speckit:extract
+# Initialise spec-kit for GitHub Copilot in this directory
+specify init . --ai copilot
 
-# 4. Generate a pipeline from the app spec
-npm run speckit:generate
-
-# 5. Run the full SpecKit demo
-node speckit/index.js run specs/app.spec.yaml
-
-# 6. Start the sample API
-npm start
+# Verify
+specify check
 ```
 
----
+### 2. Use spec-kit slash commands in GitHub Copilot Chat
 
-## 🧠 How SpecKit Controls Work
+Open Copilot Chat and run the commands in order:
 
-### The Change Spec (`specs/change.spec.yaml`)
-
-Every pull request includes a `change.spec.yaml` that declares:
-
-```yaml
-change:
-  title: "Add user-facing health dashboard"
-  type: feature          # feature | fix | chore | breaking | release
-  risk: low              # low | medium | high
-  breaking: false
-
-  components:
-    - name: api-gateway
-      impact: modified
-
-  promotion:
-    require_approvals: 1
-    environments:
-      - staging
-      - production
+```
+/speckit.constitution  <your project principles>
+/speckit.specify       <what you want to build>
+/speckit.clarify       <resolve ambiguities>
+/speckit.checklist
+/speckit.plan          <your tech stack>
+/speckit.tasks
+/speckit.analyze
+/speckit.implement
 ```
 
-### Enforcement in GitHub Actions
+### 3. Deploy to Azure
 
-| Workflow | What it does |
-|---|---|
-| `spec-enforcer.yml` | Blocks the PR if `change.spec.yaml` is missing or invalid |
-| `spec-gate.yml` | Reads the spec, evaluates promotion gates, blocks deploy if needed |
-
-### Promotion Gate Logic
-
-| Condition | Staging | Production |
-|---|---|---|
-| `risk: low`, `breaking: false` | 🟢 Clear | 🟢 Clear |
-| `risk: high` | 🟢 Clear | 🔴 Blocked |
-| `breaking: true` | 🟢 Clear | 🔴 Blocked |
-
----
-
-## 🔄 GitHub Actions Workflows
-
-### 1. `spec-enforcer.yml` — Enforce Spec Presence ⭐
-
-Runs on every PR. It:
-1. **Checks** that `specs/change.spec.yaml` exists in the PR branch
-2. **Validates** the spec with SpecKit (schema, required fields)
-3. **Extracts** risk level, breaking flag, and component count
-4. **Posts** a summary comment on the PR so reviewers see intent up front
-5. **Uploads** the summary as an artifact for audit trail
-
-### 2. `spec-gate.yml` — Apply Promotion Rules ⭐
-
-Runs on push/PR. It:
-1. **Reads** `specs/change.spec.yaml` for risk and promotion rules
-2. **Evaluates** promotion gates for staging and production
-3. **Blocks** deployment jobs if the gate fails
-4. **Uploads** a spec gate summary artifact
-
-### 3. `ci.yml` — Standard CI
-
-Runs lint → build → test with coverage upload.
-
-### 4. `spec-driven-pipeline.yml` — Agentic Spec-Driven Pipeline
-
-Reads `specs/app.spec.yaml` and conditionally runs jobs based on spec contents.
-
-### 5. `generate-pipeline.yml` — Self-Updating Pipeline
-
-When `specs/app.spec.yaml` changes, regenerates the pipeline and opens a PR.
-
----
-
-## 🎯 Demo Walkthrough (60 min)
-
-See [`docs/guide.md`](docs/guide.md) for the full step-by-step presenter guide.
-
-| Section | Topic | Clock |
-|---|---|---|
-| Part 1 | End state and why it matters | 0 – 5 min |
-| Part 2 | The change spec artifact | 5 – 15 min |
-| Part 3 | Enforce spec presence in CI | 15 – 25 min |
-| Part 4 | Extract metadata and generate summary | 25 – 40 min |
-| Part 5 | Apply promotion rules | 40 – 55 min |
-| Part 6 | Live demo: full loop | 55 – 60 min |
-
----
-
-## 🧪 Running Tests
+Configure the GitHub secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`)
+and variables (`AZURE_RESOURCE_GROUP`, `APP_NAME`), then push to `main`:
 
 ```bash
-# Run all tests
-npm test
-
-# Run with coverage report
-npm run test:coverage
-
-# Run only SpecKit tests
-npx jest tests/speckit.test.js
+git push origin main
 ```
 
-All 57 tests should pass:
-- **SpecKit Parser** — 6 tests
-- **SpecKit Validator** — 9 tests
-- **SpecKit Pipeline Generator** — 13 tests
-- **SpecKit Spec Extractor** — 25 tests
-- **Express App** — 4 tests
+The `deploy.yml` workflow will:
+1. Run `bicep/main.bicep` to provision Azure infrastructure
+2. Deploy `src/aigenius-api` to Azure App Service
+3. Build and deploy `src/aigenius-web` to Azure Static Web App
 
 ---
 
-## ⚙️ SpecKit CLI Reference
+## 🚀 GitHub Actions Workflows
 
-```
-Usage: speckit [options] [command]
-
-Agentic DevOps: turn specs into CI/CD pipelines
-
-Commands:
-  validate <spec>              Validate an app spec file
-  generate <spec> [options]    Generate a GitHub Actions workflow from an app spec
-  run <spec>                   Validate and generate a pipeline, printing a full summary
-  extract <spec> [options]     Extract risk/breaking metadata from a change spec
-  help [command]               display help for command
-```
-
-### `speckit extract` options
-
-| Option | Description |
-|---|---|
-| `-o, --output <file>` | Write Markdown summary to this file path |
-| `--env <environment>` | Evaluate the promotion gate for the given environment |
+| Workflow | Trigger | What it does |
+|----------|---------|-------------|
+| `ci.yml` | Push / PR | Lint, build, and test both `aigenius-api` and `aigenius-web` |
+| `deploy.yml` | Push to `main` / manual | Provision Bicep infra, deploy API + web to Azure |
 
 ---
 
-## 📝 Change Spec Reference
+## 🔧 Local Development
 
-```yaml
-# ── Required ──────────────────────────────────────────────────
-change:
-  title: string               # Change title (required)
-  type: feature|fix|chore|breaking|release   # Required
-  risk: low|medium|high       # Required
-  breaking: true|false        # Required
+```bash
+# Run the API locally
+cd src/aigenius-api
+npm ci && npm start        # http://localhost:3000
 
-# ── Optional ──────────────────────────────────────────────────
-  description: string
-
-  components:
-    - name: string            # Component name (required)
-      impact: new|modified|removed
-
-  promotion:
-    require_approvals: 1
-    require_passing_tests: true
-    require_security_scan: false
-    environments:
-      - staging
-      - production
-
-  refs:
-    - "closes #42"
+# Run the React frontend locally
+cd src/aigenius-web
+npm ci && npm run dev      # http://localhost:5173
 ```
 
 ---
 
-## 🤝 Who Should Attend
+## 🧱 Azure Infrastructure (Bicep)
 
-- DevOps engineers and platform engineers
-- Developers working with GitHub-based CI/CD
-- Teams looking to gate merges and releases on clear, reviewable specs
-- Anyone interested in making CI/CD validate intent, not just code
+```bash
+# Create resource group
+az group create --name rg-aigenius-dev --location eastus
 
+# Deploy all resources
+az deployment group create \
+  --resource-group rg-aigenius-dev \
+  --template-file bicep/main.bicep \
+  --parameters appName=aigenius environment=development
+```
+
+| Resource | Purpose |
+|----------|---------|
+| Azure App Service Plan (Linux B1) | Compute for the Node.js API |
+| Azure App Service | Hosts `src/aigenius-api` |
+| Azure Static Web App | Hosts built `src/aigenius-web` |
+
+---
+
+## 📖 Full Guide
+
+See [`docs/guide.md`](docs/guide.md) for the complete step-by-step walkthrough,
+including all `/speckit.*` command examples and the full Azure deployment setup.
+
+---
+
+## 🤖 Spec-Kit Slash Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `/speckit.constitution` | Create or update project governing principles |
+| `/speckit.specify` | Define what you want to build (requirements + user stories) |
+| `/speckit.clarify` | Resolve underspecified areas before planning |
+| `/speckit.checklist` | Validate spec completeness and clarity |
+| `/speckit.plan` | Create technical implementation plan with your tech stack |
+| `/speckit.tasks` | Generate actionable task list from the plan |
+| `/speckit.analyze` | Cross-artifact consistency and coverage analysis |
+| `/speckit.implement` | Execute all tasks and build the feature |
+
+---
+
+## 📄 License
+
+MIT
