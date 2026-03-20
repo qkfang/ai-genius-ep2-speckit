@@ -1,12 +1,3 @@
-// ============================================================
-// main.bicep — Azure infrastructure for AI Genius SpecKit
-//
-// Deploys:
-//   • Azure Static Web App  (React frontend)
-//   • Azure App Service     (Node.js web app)
-//   • App Service Plan      (Linux, Free/Basic tier)
-// ============================================================
-
 targetScope = 'resourceGroup'
 
 // ── Parameters ───────────────────────────────────────────────
