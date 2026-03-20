@@ -3,8 +3,9 @@
 > **Hands-On Session: Spec-Driven Development using Spec-Kit and GitHub Copilot**
 >
 > This guide walks you through using [Spec-Kit](https://github.com/github/spec-kit) to
-> design and build the AI Genius application — a Node.js API backend and a React web
-> frontend — then deploy both to Azure using Bicep and GitHub Actions CI/CD.
+> design and deploy the AI Genius application — first the React frontend, then the
+> .NET API backend, and finally the Bicep infrastructure — each as a separate spec
+> deployed to Azure via GitHub Actions CI/CD.
 >
 > **Core message:** Specifications become the source of truth. Code is their expression.
 > Deployment is the outcome.
@@ -17,14 +18,16 @@
 |------|-------|
 | [Step 1](#step-1--install-specify-cli) | Install Specify CLI |
 | [Step 2](#step-2--define-your-constitution) | Define Your Constitution (`/speckit.constitution`) |
-| [Step 3](#step-3--create-the-spec) | Create the Spec (`/speckit.specify`) |
+| [Step 3](#step-3--create-the-spec) | Create the Spec — Frontend Deployment (`/speckit.specify`) |
 | [Step 4](#step-4--clarify-the-spec) | Clarify the Spec (`/speckit.clarify`) |
 | [Step 5](#step-5--validate-the-spec) | Validate the Spec (`/speckit.checklist`) |
 | [Step 6](#step-6--create-a-technical-implementation-plan) | Create Implementation Plan (`/speckit.plan`) |
 | [Step 7](#step-7--generate-tasks) | Generate Tasks (`/speckit.tasks`) |
 | [Step 8](#step-8--analyze-and-validate) | Analyze and Validate (`/speckit.analyze`) |
 | [Step 9](#step-9--implement) | Implement (`/speckit.implement`) |
-| [Step 10](#step-10--cicd-deploy-to-azure) | CI/CD Deploy to Azure (Bicep + GitHub Actions) |
+| [Step 10](#step-10--run-the-frontend-deployment-end-to-end) | Run the Frontend Deployment End-to-End |
+| [Step 11](#step-11--speed-spec-backend-api-deployment) | Speed Spec: Backend API Deployment via GitHub Actions |
+| [Step 12](#step-12--new-spec-cicd-with-bicep-infrastructure) | New Spec: CI/CD with Bicep Infrastructure |
 
 ---
 
@@ -114,7 +117,7 @@ After initialisation, Copilot gains these slash commands in its context:
 | `/speckit.implement` | Execute all tasks |
 
 > **Context Awareness:** Spec-Kit commands automatically detect the active feature based
-> on your current Git branch (e.g., `001-aigenius-app`). Switch features by switching branches.
+> on your current Git branch (e.g., `001-frontend-deploy`). Switch features by switching branches.
 
 ---
 
@@ -145,27 +148,31 @@ Review and commit it.
 **In GitHub Copilot Chat**, use `/speckit.specify` to describe what you want to build.
 Focus on the **what** and **why** — not the tech stack.
 
+This first spec focuses on deploying the **React frontend web app** to Azure
+Static Web Apps using a GitHub Actions workflow.
+
 Spec-Kit will:
 1. Automatically determine the next feature number (e.g., `001`)
-2. Create a feature branch (`001-aigenius-app`)
-3. Generate `specs/001-aigenius-app/spec.md` from the template
+2. Create a feature branch (`001-frontend-deploy`)
+3. Generate `specs/001-frontend-deploy/spec.md` from the template
 
 ```
-/speckit.specify Build the AI Genius application.
-The application has two parts:
-1. A REST API that exposes a health endpoint and a status endpoint showing
-   the runtime environment, current timestamp, and application version.
-2. A React web frontend that displays the application name, links to the API
-   endpoints, and shows the live status returned by the API.
-Both components must be deployable to Azure — the API to Azure App Service
-and the frontend to Azure Static Web Apps. Infrastructure must be defined
-as Bicep templates so environments can be reproduced reliably.
+/speckit.specify Deploy the AI Genius React frontend web app via GitHub Actions.
+The frontend is a React + Vite application in src/ai-genius-web.
+Create a GitHub Actions workflow that:
+1. Triggers on every push to the main branch.
+2. Installs dependencies (npm ci) and builds the React app (npm run build).
+3. Deploys the built output (dist/) to Azure Static Web Apps.
+4. Uses OIDC (Workload Identity Federation) for Azure authentication — no
+   long-lived secrets stored in the repository.
+The workflow must produce a green check on the Actions tab and the deployed
+site must be reachable at the Static Web App URL.
 ```
 
 Inspect the generated spec:
 
 ```bash
-cat specs/001-aigenius-app/spec.md
+cat specs/001-frontend-deploy/spec.md
 ```
 
 ---
@@ -179,23 +186,25 @@ Run it once with a general focus, then again with specific concerns.
 
 ```
 /speckit.clarify Resolve all [NEEDS CLARIFICATION] markers in the spec.
-For the API: the health endpoint returns HTTP 200 with JSON { "status": "ok" }.
-The status endpoint returns the Node.js environment, timestamp, and app version.
-For the frontend: it calls the API status endpoint on load and renders the response.
-There is no user authentication in this initial version.
+The frontend is a React 18 + Vite app in src/ai-genius-web.
+The build output goes to dist/. The workflow file should be
+.github/workflows/deploy-web.yml.
+The Azure Static Web App deployment uses the
+Azure/static-web-apps-deploy@v1 action.
 ```
 
 **Second pass — deployment and security details:**
 
 ```
 /speckit.clarify Focus on deployment and security requirements.
-The API must run on Node.js 20 LTS. The App Service must enforce HTTPS only
-and disable FTP. The Static Web App uses the Free tier for development and
-Standard for production. All Azure resources are tagged with app, environment,
-and managedBy=bicep.
+The Static Web App uses the Free tier for development and Standard for
+production. The workflow authenticates to Azure via OIDC — no long-lived
+credentials. Required GitHub secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+AZURE_SUBSCRIPTION_ID. The workflow must set permissions:
+  id-token: write and contents: read.
 ```
 
-Review `specs/001-aigenius-app/spec.md` after each clarify pass to confirm the
+Review `specs/001-frontend-deploy/spec.md` after each clarify pass to confirm the
 `[NEEDS CLARIFICATION]` markers are resolved.
 
 ---
@@ -230,20 +239,21 @@ detailed technical implementation plan.
 
 ```
 /speckit.plan
-The API is a Node.js 20 Express application in src/aigenius-api.
-The frontend is a React 18 app built with Vite in src/aigenius-web.
-Azure infrastructure is defined in bicep/main.bicep using two modules:
-  - bicep/modules/webapp.bicep: Azure App Service Plan (Linux B1) + Web App
-  - bicep/modules/staticwebapp.bicep: Azure Static Web App (Free tier)
-CI/CD is GitHub Actions. On every push to main:
-  1. Run Bicep to provision/update infrastructure.
-  2. Deploy the API to Azure App Service via zip deploy.
-  3. Build the React app and deploy to Azure Static Web App.
-Use OIDC (Workload Identity Federation) for Azure authentication — no
-long-lived credentials stored as secrets.
+The frontend is a React 18 app built with Vite in src/ai-genius-web.
+The workflow file is .github/workflows/deploy-web.yml.
+On every push to main:
+  1. Checkout the repository.
+  2. Set up Node.js 20.
+  3. Install dependencies with npm ci.
+  4. Build the React app with npm run build (produces dist/).
+  5. Deploy dist/ to Azure Static Web Apps using
+     Azure/static-web-apps-deploy@v1.
+Authentication uses OIDC (Workload Identity Federation) — no long-lived
+credentials stored as secrets. GitHub secrets required:
+AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
 ```
 
-Spec-Kit generates into `specs/001-aigenius-app/`:
+Spec-Kit generates into `specs/001-frontend-deploy/`:
 
 | File | Contents |
 |------|----------|
@@ -266,13 +276,13 @@ model, and test scenarios.
 ```
 
 Spec-Kit reads `plan.md` and supporting documents to produce
-`specs/001-aigenius-app/tasks.md` with:
+`specs/001-frontend-deploy/tasks.md` with:
 
 - Tasks ordered by dependency
 - Independent tasks marked `[P]` (safe to run in parallel)
 - References to which contract or data-model entity each task implements
 
-Review `specs/001-aigenius-app/tasks.md` and adjust priorities if needed.
+Review `specs/001-frontend-deploy/tasks.md` and adjust priorities if needed.
 
 ---
 
@@ -300,76 +310,40 @@ Address any inconsistencies reported before proceeding.
 ## Step 9 — Implement
 
 **In GitHub Copilot Chat**, use `/speckit.implement` to execute the task list and
-build the feature. For complex projects, implement in phases to avoid overwhelming
-the agent's context.
+build the frontend deployment workflow.
 
 ```
 /speckit.implement
 ```
 
-> **Phased Implementation Tip:** For this project, consider two phases:
-> - **Phase 1:** API — Express routes, health endpoint, status endpoint, tests
-> - **Phase 2:** Frontend — React app, Vite config, API integration, build
-
-After implementation, verify locally:
+Copilot will generate the `.github/workflows/deploy-web.yml` workflow file and any
+supporting configuration. After implementation, verify locally:
 
 ```bash
-# Test the API
-cd src/aigenius-api
-npm ci
-npm test
-npm start        # Runs on http://localhost:3000
-
-# Verify endpoints
-curl http://localhost:3000/health
-curl http://localhost:3000/api/status
-
-# Build the frontend
-cd ../aigenius-web
+# Build the frontend to confirm it succeeds
+cd src/ai-genius-web
 npm ci
 npm run build    # Output in dist/
-npm run preview  # Preview at http://localhost:4173
+```
+
+Commit the generated workflow and any related changes:
+
+```bash
+git add .
+git commit -m "feat: add frontend deployment workflow"
 ```
 
 ---
 
-## Step 10 — CI/CD: Deploy to Azure
+## Step 10 — Run the Frontend Deployment End-to-End
 
-With the application built, set up automated deployment to Azure using the
-`deploy.yml` GitHub Actions workflow and the Bicep templates in `bicep/`.
+With the frontend deployment workflow implemented, push to GitHub and run the
+pipeline end-to-end to confirm everything works.
 
-### 10.1 — Set up Azure OIDC Authentication
+### 10.1 — Configure GitHub Secrets
 
-Instead of storing long-lived credentials, the workflow uses **OIDC (Workload Identity
-Federation)** — GitHub's identity is federated directly to Azure.
-
-```bash
-# 1. Create a service principal
-az ad app create --display-name "ai-genius-github-actions"
-APP_ID=$(az ad app list --display-name "ai-genius-github-actions" --query "[0].appId" -o tsv)
-
-# 2. Create the federated credential for the main branch
-az ad app federated-credential create \
-  --id $APP_ID \
-  --parameters '{
-    "name": "github-main",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:YOUR_ORG/YOUR_REPO:ref:refs/heads/main",
-    "audiences": ["api://AzureADTokenExchange"]
-  }'
-
-# 3. Create the service principal and assign Contributor role
-az ad sp create --id $APP_ID
-SP_ID=$(az ad sp show --id $APP_ID --query id -o tsv)
-az role assignment create \
-  --assignee $SP_ID \
-  --role Contributor \
-  --scope /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP
-```
-
-### 10.2 — Configure GitHub Secrets and Variables
-
-In your GitHub repository, go to **Settings → Secrets and variables → Actions** and add:
+Before the workflow can authenticate to Azure, set up the required secrets in your
+GitHub repository under **Settings → Secrets and variables → Actions**:
 
 **Secrets:**
 
@@ -378,120 +352,193 @@ In your GitHub repository, go to **Settings → Secrets and variables → Action
 | `AZURE_CLIENT_ID` | App registration client ID |
 | `AZURE_TENANT_ID` | Azure tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | *(Optional — only if not using Bicep output)* |
 
-**Variables:**
+> **Tip:** If you haven't created an Azure OIDC federated credential yet, follow the
+> Azure AD setup in [Step 12](#step-12--new-spec-cicd-with-bicep-infrastructure).
 
-| Variable | Example value |
-|----------|---------------|
-| `AZURE_RESOURCE_GROUP` | `rg-aigenius-prod` |
-| `AZURE_LOCATION` | `eastus` |
-| `APP_NAME` | `aigenius` |
-
-### 10.3 — Deploy Bicep Infrastructure
-
-The `deploy.yml` workflow provisions all Azure infrastructure in the `infra` job.
-You can also run Bicep manually for the first-time setup:
+### 10.2 — Push and Trigger the Workflow
 
 ```bash
-# Log in to Azure
-az login
-
-# Create the resource group
-az group create \
-  --name rg-aigenius-dev \
-  --location eastus
-
-# Deploy infrastructure (development)
-az deployment group create \
-  --resource-group rg-aigenius-dev \
-  --template-file bicep/main.bicep \
-  --parameters appName=aigenius environment=development
-
-# Deploy infrastructure (production)
-az deployment group create \
-  --resource-group rg-aigenius-prod \
-  --template-file bicep/main.bicep \
-  --parameters appName=aigenius environment=production appServicePlanSku=B1
+git push origin main
 ```
 
-**Resources provisioned by Bicep:**
+The `deploy-web.yml` workflow triggers automatically. Monitor progress in the
+**Actions** tab of your GitHub repository.
+
+### 10.3 — Verify Success
+
+1. Open the **Actions** tab and confirm the workflow run shows a green ✅ check.
+2. Click into the run to inspect each step: checkout, setup node, install, build, deploy.
+3. Open the Static Web App URL printed in the deployment step output.
+4. Verify the React frontend loads correctly in your browser.
+
+```
+Expected:
+✅ Workflow completes with all steps green
+✅ Static Web App URL is reachable
+✅ Frontend renders the AI Genius application
+```
+
+If any step fails, check the workflow logs for errors and fix before proceeding.
+
+---
+
+## Step 11 — Speed Spec: Backend API Deployment via GitHub Actions
+
+Now that the frontend is deploying successfully, use the Spec-Kit **speed workflow**
+to create a second spec for deploying the backend API. The speed workflow runs all
+spec-kit commands in rapid succession — specify → clarify → plan → tasks → implement.
+
+### 11.1 — Create the Backend Deployment Spec
+
+```
+/speckit.specify Deploy the AI Genius backend API via GitHub Actions.
+The backend is a .NET API in src/ai-genius-api.
+Create a GitHub Actions workflow (.github/workflows/deploy-api.yml) that:
+1. Triggers on every push to main.
+2. Builds the .NET API project.
+3. Deploys the API to Azure App Service using azure/webapps-deploy@v3.
+4. Uses OIDC (Workload Identity Federation) for authentication.
+The App Service must enforce HTTPS only. The workflow must produce a green
+check and the /health endpoint must return { "status": "ok" }.
+```
+
+### 11.2 — Speed-Run: Clarify, Plan, Tasks
+
+Run each command in quick succession without pausing:
+
+```
+/speckit.clarify The API runs on .NET 8+. The App Service Plan uses Linux B1.
+Zip deploy is used. Required secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+AZURE_SUBSCRIPTION_ID. The App Service name is output from Bicep or configured
+as a GitHub variable APP_SERVICE_NAME.
+```
+
+```
+/speckit.plan
+Workflow: .github/workflows/deploy-api.yml
+Steps: checkout → setup-dotnet → dotnet publish → zip artifact → azure/webapps-deploy@v3
+Authentication: OIDC with id-token: write permission.
+```
+
+```
+/speckit.tasks
+```
+
+### 11.3 — Implement and Deploy
+
+```
+/speckit.implement
+```
+
+After implementation, push and verify:
+
+```bash
+git add .
+git commit -m "feat: add backend API deployment workflow"
+git push origin main
+```
+
+Monitor the **Actions** tab. Once the workflow completes:
+
+```bash
+# Verify the deployed API
+curl https://YOUR_APP_SERVICE.azurewebsites.net/health
+# Expected: { "status": "ok" }
+```
+
+```
+Expected:
+✅ deploy-api.yml workflow completes green
+✅ API is reachable at the App Service URL
+✅ /health returns { "status": "ok" }
+```
+
+---
+
+## Step 12 — New Spec: CI/CD with Bicep Infrastructure
+
+Create a third spec to provision all Azure infrastructure using Bicep templates,
+deployed via a GitHub Actions workflow. This consolidates infrastructure-as-code
+into the CI/CD pipeline.
+
+### 12.1 — Create the Bicep CI/CD Spec
+
+```
+/speckit.specify Add Bicep infrastructure-as-code CI/CD to the AI Genius project.
+Create a GitHub Actions workflow (.github/workflows/deploy-infra.yml) that:
+1. Triggers on every push to main (or manually via workflow_dispatch).
+2. Authenticates to Azure via OIDC.
+3. Creates the resource group if it does not exist.
+4. Runs az deployment group create with bicep/main.bicep to provision:
+   - Azure App Service Plan (Linux B1) + Web App (for the API)
+   - Azure Static Web App (for the frontend)
+5. Outputs the App Service name and Static Web App token for downstream
+   deploy-api and deploy-web workflows.
+All Azure resources must be tagged with app, environment, and managedBy=bicep.
+The Bicep templates already exist in bicep/main.bicep and bicep/modules/.
+```
+
+### 12.2 — Speed-Run: Clarify → Plan → Tasks → Implement
+
+```
+/speckit.clarify The Bicep modules are:
+  - bicep/modules/webapp.bicep: App Service Plan + Web App
+  - bicep/modules/staticwebapp.bicep: Static Web App
+Parameters: appName (default: aigenius), environment (development/staging/production),
+appServicePlanSku (default: B1), staticWebAppSku (default: Free).
+The infra workflow runs before deploy-api and deploy-web. Use workflow outputs
+or GitHub variables to pass resource names between workflows.
+```
+
+```
+/speckit.plan
+Workflow: .github/workflows/deploy-infra.yml
+Steps: checkout → azure login (OIDC) → create resource group → az deployment group create
+Outputs: nodeAppName, staticWebAppToken
+Downstream workflows (deploy-api, deploy-web) consume these outputs.
+```
+
+```
+/speckit.tasks
+```
+
+```
+/speckit.implement
+```
+
+### 12.3 — Push and Verify End-to-End
+
+```bash
+git add .
+git commit -m "feat: add Bicep infrastructure CI/CD workflow"
+git push origin main
+```
+
+Verify in the **Actions** tab that all three workflows complete successfully:
+
+```
+infra (deploy-infra.yml)  ──┬──▶  deploy-api.yml
+                            └──▶  deploy-web.yml
+```
+
+### 12.4 — Bicep Parameters Reference
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `appName` | `aigenius` | Base name for all Azure resources |
+| `location` | resource group location | Azure region |
+| `environment` | `development` | `development`, `staging`, or `production` |
+| `appServicePlanSku` | `B1` | App Service Plan SKU (`F1`, `B1`, `B2`, `S1`) |
+| `staticWebAppSku` | `Free` | Static Web App tier (`Free` or `Standard`) |
+
+### 12.5 — Resources Provisioned by Bicep
 
 | Resource | Bicep module | Purpose |
 |----------|-------------|---------|
 | Azure App Service Plan (Linux B1) | `modules/webapp.bicep` | Compute plan for the API |
-| Azure App Service | `modules/webapp.bicep` | Hosts `src/aigenius-api` |
-| Azure Static Web App | `modules/staticwebapp.bicep` | Hosts built `src/aigenius-web` |
-
-### 10.4 — CI/CD Workflow: `deploy.yml`
-
-The `deploy.yml` workflow triggers on every push to `main` and runs three jobs in order:
-
-```
-infra  ──┬──▶  deploy-api
-         └──▶  deploy-web
-```
-
-**Job 1 — `infra`: Provision infrastructure via Bicep**
-
-```yaml
-- Azure Login (OIDC)
-- Create resource group if it does not exist
-- az deployment group create bicep/main.bicep
-- Output: nodeAppName, staticWebAppToken
-```
-
-**Job 2 — `deploy-api`: Deploy Node.js API to Azure App Service**
-
-```yaml
-- npm ci --omit=dev          # production dependencies only
-- zip src/aigenius-api/
-- azure/webapps-deploy@v3    # zip deploy to App Service
-```
-
-**Job 3 — `deploy-web`: Build and deploy React app to Azure Static Web App**
-
-```yaml
-- npm ci && npm run build    # Vite produces dist/
-- Azure/static-web-apps-deploy@v1
-```
-
-### 10.5 — Trigger a Deployment
-
-Push to `main` to trigger the full pipeline automatically:
-
-```bash
-git add .
-git commit -m "feat: initial AI Genius app"
-git push origin main
-```
-
-Or trigger manually from the **Actions** tab:
-
-1. Go to **Actions** → **Deploy to Azure**
-2. Click **Run workflow**
-3. Select the target environment (`staging` or `production`)
-4. Click **Run workflow**
-
-### 10.6 — Verify the Deployment
-
-After the workflow completes, verify each component:
-
-```bash
-# Check App Service is running
-curl https://aigenius-nodeapp-production.azurewebsites.net/health
-
-# Expected response:
-# { "status": "ok" }
-
-curl https://aigenius-nodeapp-production.azurewebsites.net/api/status
-
-# Expected response:
-# { "status": "running", "environment": "production", "timestamp": "..." }
-```
-
-The Static Web App URL is printed in the **Bicep Outputs** section of the workflow
-step summary. Open it in your browser to verify the frontend loads and calls the API.
+| Azure App Service | `modules/webapp.bicep` | Hosts `src/ai-genius-api` |
+| Azure Static Web App | `modules/staticwebapp.bicep` | Hosts built `src/ai-genius-web` |
 
 ---
 
@@ -508,13 +555,12 @@ ai-genius-s4-ep2-speckit/
 │       └── webapp.bicep            # Azure App Service + Plan
 │
 ├── src/
-│   ├── aigenius-api/               # Node.js Express API
-│   │   ├── app.js                  # Express app (health, status endpoints)
-│   │   ├── package.json
-│   │   └── routes/
-│   │       └── health.js
+│   ├── ai-genius-api/              # .NET API backend
+│   │   ├── ai-genius-api.csproj
+│   │   ├── Program.cs
+│   │   └── appsettings.json
 │   │
-│   └── aigenius-web/               # React + Vite frontend
+│   └── ai-genius-web/              # React + Vite frontend
 │       ├── index.html
 │       ├── vite.config.js
 │       ├── package.json
@@ -524,32 +570,26 @@ ai-genius-s4-ep2-speckit/
 │
 ├── specs/                          # Generated by spec-kit (git-tracked)
 │   ├── constitution.md             # Project governing principles
-│   └── 001-aigenius-app/
-│       ├── spec.md                 # Feature requirements
-│       ├── plan.md                 # Technical implementation plan
-│       ├── data-model.md           # Data structures
-│       ├── contracts/              # API endpoint contracts
-│       ├── research.md             # Library choices and rationale
-│       ├── quickstart.md           # Validation scenarios
-│       └── tasks.md                # Actionable task list
+│   ├── 001-frontend-deploy/        # Spec: frontend deployment via GitHub Actions
+│   │   ├── spec.md
+│   │   ├── plan.md
+│   │   └── tasks.md
+│   ├── 002-api-deploy/             # Spec: backend API deployment via GitHub Actions
+│   │   ├── spec.md
+│   │   ├── plan.md
+│   │   └── tasks.md
+│   └── 003-bicep-cicd/             # Spec: Bicep infrastructure CI/CD
+│       ├── spec.md
+│       ├── plan.md
+│       └── tasks.md
 │
 └── .github/
     └── workflows/
         ├── ci.yml                  # Build & test on every PR
-        └── deploy.yml              # Provision Bicep + deploy to Azure on main
+        ├── deploy-web.yml          # Deploy frontend to Azure Static Web Apps
+        ├── deploy-api.yml          # Deploy API to Azure App Service
+        └── deploy-infra.yml        # Provision Bicep infrastructure
 ```
-
----
-
-## Bicep Parameters Reference
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `appName` | `aigenius` | Base name for all Azure resources |
-| `location` | resource group location | Azure region |
-| `environment` | `development` | `development`, `staging`, or `production` |
-| `appServicePlanSku` | `B1` | App Service Plan SKU (`F1`, `B1`, `B2`, `S1`) |
-| `staticWebAppSku` | `Free` | Static Web App tier (`Free` or `Standard`) |
 
 ---
 
