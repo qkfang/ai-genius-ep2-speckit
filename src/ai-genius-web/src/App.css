@@ -185,11 +185,11 @@
 
 /* ── SpecKit branding ──────────────────────────────── */
 .speckit-feature {
-  margin: 1.5rem auto 1.25rem;
+  margin: 0.75rem auto 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .speckit-logo-link {

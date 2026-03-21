@@ -28,9 +28,8 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="header-badge">Microsoft Reactor</div>
         <h1>🤖 Microsoft AI Genius</h1>
-        <p>Advance your AI skills and power up your productivity with cutting-edge AI tech and tools.</p>
+        <p>Advance your AI skills and power up your productivity.</p>
         <div className="speckit-feature">
           <a
             href="https://github.com/github/spec-kit"
@@ -46,14 +45,6 @@ function App() {
           </a>
           <p className="speckit-tagline">Build high-quality software faster.</p>
         </div>
-        <a
-          className="series-link"
-          href="https://developer.microsoft.com/en-us/reactor/series/s-1453/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          View Series ↗
-        </a>
       </header>
 
       <main className="app-main">
@@ -79,18 +70,6 @@ function App() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
-
-        {status && (
-          <section className="status-card">
-            <h2>⚙️ Backend Status</h2>
-            <ul>
-              <li><strong>Status:</strong> <span className="tag green">{status.status}</span></li>
-              <li><strong>Environment:</strong> {status.environment}</li>
-              <li><strong>SpecKit enabled:</strong> {String(status.speckit?.enabled)}</li>
-              <li><strong>Timestamp:</strong> {status.timestamp}</li>
-            </ul>
           </section>
         )}
       </main>

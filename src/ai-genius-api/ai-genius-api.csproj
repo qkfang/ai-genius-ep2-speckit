@@ -7,4 +7,10 @@
     <RootNamespace>ai_genius_api</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Update="episodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
