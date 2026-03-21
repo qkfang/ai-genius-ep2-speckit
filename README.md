@@ -33,11 +33,8 @@ ai-genius-s4-ep2-speckit/
 │   ├── aigenius-api/               # Node.js Express API
 │   └── aigenius-web/               # React + Vite frontend
 │
-├── specs/                          # Spec-Kit generated specs (git-tracked)
-│
 └── .github/
     └── workflows/
-        ├── ci.yml                  # Build & test on every PR/push
         └── deploy.yml              # Provision Bicep + deploy to Azure on main
 ```
 
@@ -45,24 +42,7 @@ ai-genius-s4-ep2-speckit/
 
 ## ⚡ Quick Start
 
-### 1. Install Specify CLI and set up GitHub Copilot commands
-
-```bash
-# Install uv (if needed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install specify (persistent)
-uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
-
-# Initialise spec-kit for GitHub Copilot in this directory
-specify init . --ai copilot
-
-# Verify
-specify check
-```
-
-### 2. Use spec-kit slash commands in GitHub Copilot Chat
-
+Use spec-kit slash commands in GitHub Copilot Chat.
 Open Copilot Chat and run the commands in order:
 
 ```
@@ -75,29 +55,6 @@ Open Copilot Chat and run the commands in order:
 /speckit.analyze
 /speckit.implement
 ```
-
-### 3. Deploy to Azure
-
-Configure the GitHub secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`)
-and variables (`AZURE_RESOURCE_GROUP`, `APP_NAME`), then push to `main`:
-
-```bash
-git push origin main
-```
-
-The `deploy.yml` workflow will:
-1. Run `bicep/main.bicep` to provision Azure infrastructure
-2. Deploy `src/aigenius-api` to Azure App Service
-3. Build and deploy `src/aigenius-web` to Azure Static Web App
-
----
-
-## 🚀 GitHub Actions Workflows
-
-| Workflow | Trigger | What it does |
-|----------|---------|-------------|
-| `ci.yml` | Push / PR | Lint, build, and test both `aigenius-api` and `aigenius-web` |
-| `deploy.yml` | Push to `main` / manual | Provision Bicep infra, deploy API + web to Azure |
 
 ---
 
@@ -115,49 +72,7 @@ npm ci && npm run dev      # http://localhost:5173
 
 ---
 
-## 🧱 Azure Infrastructure (Bicep)
-
-```bash
-# Create resource group
-az group create --name rg-aigenius-dev --location eastus
-
-# Deploy all resources
-az deployment group create \
-  --resource-group rg-aigenius-dev \
-  --template-file bicep/main.bicep \
-  --parameters appName=aigenius environment=development
-```
-
-| Resource | Purpose |
-|----------|---------|
-| Azure App Service Plan (Linux B1) | Compute for the Node.js API |
-| Azure App Service | Hosts `src/aigenius-api` |
-| Azure Static Web App | Hosts built `src/aigenius-web` |
-
----
-
 ## 📖 Full Guide
 
 See [`docs/guide.md`](docs/guide.md) for the complete step-by-step walkthrough,
 including all `/speckit.*` command examples and the full Azure deployment setup.
-
----
-
-## 🤖 Spec-Kit Slash Commands Reference
-
-| Command | Description |
-|---------|-------------|
-| `/speckit.constitution` | Create or update project governing principles |
-| `/speckit.specify` | Define what you want to build (requirements + user stories) |
-| `/speckit.clarify` | Resolve underspecified areas before planning |
-| `/speckit.checklist` | Validate spec completeness and clarity |
-| `/speckit.plan` | Create technical implementation plan with your tech stack |
-| `/speckit.tasks` | Generate actionable task list from the plan |
-| `/speckit.analyze` | Cross-artifact consistency and coverage analysis |
-| `/speckit.implement` | Execute all tasks and build the feature |
-
----
-
-## 📄 License
-
-MIT
