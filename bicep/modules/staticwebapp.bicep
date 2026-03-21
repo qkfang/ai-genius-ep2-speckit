@@ -12,7 +12,6 @@ param appName string
 param location string
 
 @description('Deployment environment tag.')
-@allowed(['development', 'staging', 'production'])
 param environment string
 
 @description('Static Web App pricing tier.')
