@@ -25,11 +25,12 @@ jobs:
   infra:
     name: Deploy Bicep
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: Azure CLI Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
