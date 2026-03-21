@@ -21,7 +21,37 @@ including all `/speckit.*` command examples and the full Azure deployment setup.
 
 ---
 
+## ⚡ Quick Start
 
+Use spec-kit slash commands in GitHub Copilot Chat.
+Open Copilot Chat and run the commands in order:
+
+```
+/speckit.constitution  <your project principles>
+/speckit.specify       <what you want to build>
+/speckit.clarify       <resolve ambiguities>
+/speckit.checklist
+/speckit.plan          <your tech stack>
+/speckit.tasks
+/speckit.analyze
+/speckit.implement
+```
+
+---
+
+## 🔧 Local Development
+
+```bash
+# Run the API locally
+cd src/aigenius-api
+npm ci && npm start        # http://localhost:3000
+
+# Run the React frontend locally
+cd src/aigenius-web
+npm ci && npm run dev      # http://localhost:5173
+```
+
+---
 
 ## Project Structure
 
@@ -73,36 +103,4 @@ ai-genius-s4-ep2-speckit/
         ├── deploy-web.yml          # Deploy frontend to Azure Static Web Apps
         ├── deploy-api.yml          # Deploy API to Azure App Service
         └── deploy-infra.yml        # Provision Bicep infrastructure
-```
-
----
-
-## ⚡ Quick Start
-
-Use spec-kit slash commands in GitHub Copilot Chat.
-Open Copilot Chat and run the commands in order:
-
-```
-/speckit.constitution  <your project principles>
-/speckit.specify       <what you want to build>
-/speckit.clarify       <resolve ambiguities>
-/speckit.checklist
-/speckit.plan          <your tech stack>
-/speckit.tasks
-/speckit.analyze
-/speckit.implement
-```
-
----
-
-## 🔧 Local Development
-
-```bash
-# Run the API locally
-cd src/aigenius-api
-npm ci && npm start        # http://localhost:3000
-
-# Run the React frontend locally
-cd src/aigenius-web
-npm ci && npm run dev      # http://localhost:5173
 ```
