@@ -18,7 +18,7 @@
 | Part | Topic |
 |------|-------|
 | [Part 1 — Setup](#part-1--setup) | Set up Spec-Kit in the GitHub repo |
-| [Part 2 — Existing IaC Spec](#part-2--existing-iac-spec) | Explain the existing Azure IaC pipeline spec & its components |
+| [Part 2 — Azure IaC Deployment](#part-2--azure-iac-deployment) | Explain the existing Azure IaC pipeline spec & its components |
 | [Part 3 — Frontend App](#part-3--frontend-app) | Step-by-step: create a new spec to deploy the frontend via GitHub Actions |
 | [Part 4 — API App](#part-4--api-app) | Speed run: create a spec for backend API deployment the same way |
 | [Part 5 — Quality Gates](#part-5--quality-gates) | Add quality gates to the pipelines |
@@ -118,7 +118,7 @@ Review and commit it.
 
 ---
 
-## Part 2 — Existing IaC Spec
+## Part 2 — Azure IaC Deployment
 
 > **Agenda:** Explain the existing Azure IaC pipeline spec & its components.
 
