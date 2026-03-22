@@ -4,10 +4,9 @@
 
 > **Hands-On Session: Spec-Driven Development using Spec-Kit and GitHub Copilot**
 >
-> This guide walks you through using [Spec-Kit](https://github.com/github/spec-kit) to
-> design and deploy the AI Genius application — first the React frontend, then the
-> .NET API backend, and finally the Bicep infrastructure — each as a separate spec
-> deployed to Azure via GitHub Actions CI/CD.
+> This guide follows the live session agenda — from setting up Spec-Kit in the GitHub
+> repo, to explaining an existing Azure IaC spec, to creating brand-new specs for the
+> frontend and backend, adding quality gates, and wrapping up with next steps.
 >
 > **Core message:** Specifications become the source of truth. Code is their expression.
 > Deployment is the outcome.
@@ -18,15 +17,20 @@
 
 | Part | Topic |
 |------|-------|
-| [Part 1 — Setup](#part-1--setup) | Install Specify CLI & Define Your Constitution |
-| [Part 2 — Existing Infrastructure Pipelines](#part-2--existing-infrastructure-pipelines) | Bicep CI/CD for Azure Infrastructure |
-| [Part 3 — Frontend App](#part-3--frontend-app) | Spec-Driven Frontend Deployment (Specify → Implement → Deploy) |
-| [Part 4 — API App](#part-4--api-app) | Backend API Deployment via GitHub Actions |
-| [Part 5 — Add Gates](#part-5--add-gates) | Quality Gates & Deployment Approvals (Speed Spec) |
+| [Part 1 — Setup](#part-1--setup) | Set up Spec-Kit in the GitHub repo |
+| [Part 2 — Existing IaC Spec](#part-2--existing-iac-spec) | Explain the existing Azure IaC pipeline spec & its components |
+| [Part 3 — Frontend App](#part-3--frontend-app) | Step-by-step: create a new spec to deploy the frontend via GitHub Actions |
+| [Part 4 — API App](#part-4--api-app) | Speed run: create a spec for backend API deployment the same way |
+| [Part 5 — Quality Gates](#part-5--quality-gates) | Add quality gates to the pipelines |
+| [Part 6 — Wrap-up](#part-6--wrap-up) | Wrap-up and next steps |
 
 ---
 
-## Prerequisites
+## Part 1 — Setup
+
+> **Agenda:** Set up Spec-Kit in the GitHub repo.
+
+### Prerequisites
 
 Before starting, make sure you have:
 
@@ -54,8 +58,6 @@ uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0
 ```
 
 ---
-
-## Part 1 — Setup
 
 ### Step 1 — Install Specify CLI
 
@@ -116,13 +118,35 @@ Review and commit it.
 
 ---
 
-## Part 2 — Existing Infrastructure Pipelines
+## Part 2 — Existing IaC Spec
 
-Provision all Azure infrastructure using Bicep templates before deploying applications.
-This ensures the target resources (App Service, Static Web App) exist before the
-application deployment workflows run.
+> **Agenda:** Explain the existing Azure IaC pipeline spec & its components.
 
-### 2.1 — Create the Bicep CI/CD Spec
+Before building anything new, orient yourself in the existing Bicep CI/CD spec that
+already lives in `specs/001-bicep-cicd-workflow/`. Walking through it demonstrates
+what a complete Spec-Kit feature looks like and shows the role of every artifact.
+
+### 2.1 — Tour the Spec Folder
+
+Open `specs/001-bicep-cicd-workflow/` and note each file's purpose:
+
+| File | Role |
+|------|------|
+| `spec.md` | Business requirements — the **what** and **why** |
+| `plan.md` | Technical implementation plan — the **how** |
+| `tasks.md` | Ordered, atomic task list derived from the plan |
+| `data-model.md` | Entities, attributes, and relationships |
+| `research.md` | Library choices and rationale |
+| `quickstart.md` | Key validation scenarios and smoke-test steps |
+| `contracts/workflow-interface.md` | GitHub Actions workflow I/O contract |
+| `checklists/requirements.md` | Spec completeness checklist |
+
+Open `spec.md` and trace one requirement all the way through to `tasks.md` to see
+how Spec-Kit keeps every layer in sync.
+
+### 2.2 — How the Spec Was Created
+
+For reference, this spec was bootstrapped with the following commands:
 
 ```
 /speckit.specify Add Bicep infrastructure-as-code CI/CD to the AI Genius project.
@@ -139,7 +163,7 @@ All Azure resources must be tagged with app, environment, and managedBy=bicep.
 The Bicep templates already exist in bicep/main.bicep and bicep/modules/.
 ```
 
-### 2.2 — Speed-Run: Clarify → Plan → Tasks → Implement
+Then clarify → plan → tasks → implement in quick succession:
 
 ```
 /speckit.clarify The Bicep modules are:
@@ -147,29 +171,15 @@ The Bicep templates already exist in bicep/main.bicep and bicep/modules/.
   - bicep/modules/staticwebapp.bicep: Static Web App
 Parameters: appName (default: aigenius), environment (dev/qa/prod),
 appServicePlanSku (default: B1), staticWebAppSku (default: Free).
-The infra workflow runs before deploy-api and deploy-web. Use workflow outputs
-or GitHub variables to pass resource names between workflows.
 ```
 
 ```
 /speckit.plan
-Workflow: .github/workflows/deploy-infra.yml
-Steps: checkout → azure login (OIDC) → create resource group → az deployment group create
-```
-
-```
 /speckit.tasks
-```
-
-```
 /speckit.implement
 ```
 
-### 2.3 — Push and Verify Infrastructure
-
-Verify in the **Actions** tab that the infrastructure workflow completes successfully.
-
-### 2.4 — Bicep Parameters Reference
+### 2.3 — Bicep Parameters & Resources
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -179,10 +189,8 @@ Verify in the **Actions** tab that the infrastructure workflow completes success
 | `appServicePlanSku` | `B1` | App Service Plan SKU (`F1`, `B1`, `B2`, `S1`) |
 | `staticWebAppSku` | `Free` | Static Web App tier (`Free` or `Standard`) |
 
-### 2.5 — Resources Provisioned by Bicep
-
 | Resource | Bicep module | Purpose |
-|----------|-------------|--------|
+|----------|-------------|---------|
 | Azure App Service Plan (Linux B1) | `modules/webapp.bicep` | Compute plan for the API |
 | Azure App Service | `modules/webapp.bicep` | Hosts `src/ai-genius-api` |
 | Azure Static Web App | `modules/staticwebapp.bicep` | Hosts built `src/ai-genius-web` |
@@ -190,6 +198,8 @@ Verify in the **Actions** tab that the infrastructure workflow completes success
 ---
 
 ## Part 3 — Frontend App
+
+> **Agenda:** Step-by-step walkthrough to create a new spec to deploy the frontend app using GitHub Actions.
 
 ### 3.1 — Create the Spec
 
@@ -433,6 +443,8 @@ If any step fails, check the workflow logs for errors and fix before proceeding.
 
 ## Part 4 — API App
 
+> **Agenda:** Speed run to create a spec for backend API deployment in the same way as the frontend.
+
 Use the Spec-Kit **speed workflow** to create a spec for deploying the backend API.
 The speed workflow runs all spec-kit commands in rapid succession —
 specify → clarify → plan → tasks → implement.
@@ -504,7 +516,9 @@ Expected:
 
 ---
 
-## Part 5 — Add Gates
+## Part 5 — Quality Gates
+
+> **Agenda:** Add quality gates to the frontend and backend pipelines.
 
 Use the Spec-Kit **speed workflow** to add quality gates and deployment approvals
 to the CI/CD pipeline. Gates enforce code quality, security checks, and manual
@@ -583,3 +597,29 @@ Expected:
 ```
 
 ---
+
+## Part 6 — Wrap-up
+
+> **Agenda:** Wrap-up and next steps.
+
+### What We Built Today
+
+We used Spec-Kit and GitHub Copilot to:
+
+1. **Set up** the spec-kit scaffolding and project constitution.
+2. **Understood** a complete, existing spec (`001-bicep-cicd-workflow`) by reading every artifact.
+3. **Created** a frontend deployment spec step-by-step — specify → clarify → checklist → plan → tasks → analyze → implement.
+4. **Speed-ran** the same workflow for the backend API.
+5. **Added** quality gates as a new spec without touching a single workflow file manually.
+
+Every decision — from auth to environment tiers to reviewer counts — lives in the spec. The code is just its expression.
+
+---
+
+### Explore Spec-Kit Further
+
+**GitHub repository:** [github.com/github/spec-kit](https://github.com/github/spec-kit)
+
+---
+
+*AI Genius — Season 4, Episode 2 · Spec-Kit with GitHub Copilot*
