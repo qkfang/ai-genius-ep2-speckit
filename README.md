@@ -99,7 +99,6 @@ ai-genius-s4-ep2-speckit/
 │
 └── .github/
     └── workflows/
-        ├── ci.yml                  # Build & test on every PR
         ├── deploy-web.yml          # Deploy frontend to Azure Static Web Apps
         ├── deploy-api.yml          # Deploy API to Azure App Service
         └── deploy-infra.yml        # Provision Bicep infrastructure
