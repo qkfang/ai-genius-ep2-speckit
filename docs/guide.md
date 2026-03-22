@@ -4,7 +4,7 @@
 
 > **Hands-On Session: Spec-Driven Development using Spec-Kit and GitHub Copilot**
 >
-> This guide follows the live session agenda — from setting up Spec-Kit in the GitHub
+> This guide follows the live session agenda - from setting up Spec-Kit in the GitHub
 > repo, to explaining an existing Azure IaC spec, to creating brand-new specs for the
 > frontend and backend, adding quality gates, and wrapping up with next steps.
 >
@@ -17,16 +17,16 @@
 
 | Part | Topic |
 |------|-------|
-| [Part 1 — Setup](#part-1--setup) | Set up Spec-Kit in the GitHub repo |
-| [Part 2 — Azure IaC Deployment](#part-2--azure-iac-deployment) | Explain the existing Azure IaC pipeline spec & its components |
-| [Part 3 — Frontend App](#part-3--frontend-app) | Step-by-step: create a new spec to deploy the frontend via GitHub Actions |
-| [Part 4 — API App](#part-4--api-app) | Speed run: create a spec for backend API deployment the same way |
-| [Part 5 — Quality Gates](#part-5--quality-gates) | Add quality gates to the pipelines |
-| [Part 6 — Wrap-up](#part-6--wrap-up) | Wrap-up and next steps |
+| [Part 1 - Setup](#part-1--setup) | Set up Spec-Kit in the GitHub repo |
+| [Part 2 - Azure IaC Deployment](#part-2--azure-iac-deployment) | Explain the existing Azure IaC pipeline spec & its components |
+| [Part 3 - Frontend App](#part-3--frontend-app) | Step-by-step: create a new spec to deploy the frontend via GitHub Actions |
+| [Part 4 - API App](#part-4--api-app) | Speed run: create a spec for backend API deployment the same way |
+| [Part 5 - Quality Gates](#part-5--quality-gates) | Add quality gates to the pipelines |
+| [Part 6 - Wrap-up](#part-6--wrap-up) | Wrap-up and next steps |
 
 ---
 
-## Part 1 — Setup
+## Part 1 - Setup
 
 > **Agenda:** Set up Spec-Kit in the GitHub repo.
 
@@ -37,7 +37,7 @@ Before starting, make sure you have:
 - **GitHub Copilot** subscription (individual, Business, or Enterprise)
 - **Python 3.8+** with `uv` (for installing Specify CLI)
 - **Node.js 20+** and `npm`
-- **Azure CLI** (`az`) — authenticated via `az login`
+- **Azure CLI** (`az`) - authenticated via `az login`
 - **Git** configured locally
 - The repository cloned locally or opened in GitHub Codespaces
 
@@ -59,7 +59,7 @@ uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0
 
 ---
 
-### Step 1 — Install Specify CLI
+### Step 1 - Install Specify CLI
 
 The `specify` CLI scaffolds the spec-kit file structure and installs the `/speckit.*`
 slash commands into your AI agent. For GitHub Copilot, this writes prompt files into
@@ -96,7 +96,7 @@ After initialisation, Copilot gains these slash commands in its context:
 
 ---
 
-### Step 2 — Define Your Constitution
+### Step 2 - Define Your Constitution
 
 **In GitHub Copilot Chat**, use `/speckit.constitution` to establish the governing
 principles for this project. The constitution is committed to `specs/constitution.md` and
@@ -118,7 +118,7 @@ Review and commit it.
 
 ---
 
-## Part 2 — Azure IaC Deployment
+## Part 2 - Azure IaC Deployment
 
 > **Agenda:** Explain the existing Azure IaC pipeline spec & its components.
 
@@ -126,14 +126,14 @@ Before building anything new, orient yourself in the existing Bicep CI/CD spec t
 already lives in `specs/001-bicep-cicd-workflow/`. Walking through it demonstrates
 what a complete Spec-Kit feature looks like and shows the role of every artifact.
 
-### 2.1 — Tour the Spec Folder
+### 2.1 - Tour the Spec Folder
 
 Open `specs/001-bicep-cicd-workflow/` and note each file's purpose:
 
 | File | Role |
 |------|------|
-| `spec.md` | Business requirements — the **what** and **why** |
-| `plan.md` | Technical implementation plan — the **how** |
+| `spec.md` | Business requirements - the **what** and **why** |
+| `plan.md` | Technical implementation plan - the **how** |
 | `tasks.md` | Ordered, atomic task list derived from the plan |
 | `data-model.md` | Entities, attributes, and relationships |
 | `research.md` | Library choices and rationale |
@@ -144,7 +144,7 @@ Open `specs/001-bicep-cicd-workflow/` and note each file's purpose:
 Open `spec.md` and trace one requirement all the way through to `tasks.md` to see
 how Spec-Kit keeps every layer in sync.
 
-### 2.2 — How the Spec Was Created
+### 2.2 - How the Spec Was Created
 
 For reference, this spec was bootstrapped with the following commands:
 
@@ -179,7 +179,7 @@ appServicePlanSku (default: B1), staticWebAppSku (default: Free).
 /speckit.implement
 ```
 
-### 2.3 — Bicep Parameters & Resources
+### 2.3 - Bicep Parameters & Resources
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -197,14 +197,14 @@ appServicePlanSku (default: B1), staticWebAppSku (default: Free).
 
 ---
 
-## Part 3 — Frontend App
+## Part 3 - Frontend App
 
 > **Agenda:** Step-by-step walkthrough to create a new spec to deploy the frontend app using GitHub Actions.
 
-### 3.1 — Create the Spec
+### 3.1 - Create the Spec
 
 **In GitHub Copilot Chat**, use `/speckit.specify` to describe what you want to build.
-Focus on the **what** and **why** — not the tech stack.
+Focus on the **what** and **why** - not the tech stack.
 
 This first spec focuses on deploying the **React frontend web app** to Azure
 Static Web Apps using a GitHub Actions workflow.
@@ -221,7 +221,7 @@ Create a GitHub Actions workflow that:
 1. Triggers on every push to the main branch.
 2. Installs dependencies (npm ci) and builds the React app (npm run build).
 3. Deploys the built output (dist/) to Azure Static Web Apps.
-4. Uses OIDC (Workload Identity Federation) for Azure authentication — no
+4. Uses OIDC (Workload Identity Federation) for Azure authentication - no
    long-lived secrets stored in the repository.
 The workflow must produce a green check on the Actions tab and the deployed
 site must be reachable at the Static Web App URL.
@@ -235,12 +235,12 @@ cat specs/002-frontend-deploy/spec.md
 
 ---
 
-### 3.2 — Clarify the Spec
+### 3.2 - Clarify the Spec
 
 **In GitHub Copilot Chat**, use `/speckit.clarify` to resolve any ambiguities.
 Run it once with a general focus, then again with specific concerns.
 
-**First pass — general clarification:**
+**First pass - general clarification:**
 
 ```
 /speckit.clarify Resolve all [NEEDS CLARIFICATION] markers in the spec.
@@ -251,12 +251,12 @@ The Azure Static Web App deployment uses the
 Azure/static-web-apps-deploy@v1 action.
 ```
 
-**Second pass — deployment and security details:**
+**Second pass - deployment and security details:**
 
 ```
 /speckit.clarify Focus on deployment and security requirements.
 The Static Web App uses the Free tier for development and Standard for
-production. The workflow authenticates to Azure via OIDC — no long-lived
+production. The workflow authenticates to Azure via OIDC - no long-lived
 credentials. Required GitHub secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID,
 AZURE_SUBSCRIPTION_ID. The workflow must set permissions:
   id-token: write and contents: read.
@@ -267,7 +267,7 @@ Review `specs/002-frontend-deploy/spec.md` after each clarify pass to confirm th
 
 ---
 
-### 3.3 — Validate the Spec
+### 3.3 - Validate the Spec
 
 **In GitHub Copilot Chat**, use `/speckit.checklist` to run a quality check on
 the specification before moving to implementation planning. This acts like a
@@ -289,7 +289,7 @@ Address any failing checklist items before continuing.
 
 ---
 
-### 3.4 — Create a Technical Implementation Plan
+### 3.4 - Create a Technical Implementation Plan
 
 **In GitHub Copilot Chat**, use `/speckit.plan` to provide the tech stack and
 architecture choices. Spec-Kit translates the business requirements into a
@@ -306,7 +306,7 @@ On every push to main:
   4. Build the React app with npm run build (produces dist/).
   5. Deploy dist/ to Azure Static Web Apps using
      Azure/static-web-apps-deploy@v1.
-Authentication uses OIDC (Workload Identity Federation) — no long-lived
+Authentication uses OIDC (Workload Identity Federation) - no long-lived
 credentials stored as secrets. GitHub secrets required:
 AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
 ```
@@ -323,7 +323,7 @@ Spec-Kit generates into `specs/002-frontend-deploy/`:
 
 ---
 
-### 3.5 — Generate Tasks
+### 3.5 - Generate Tasks
 
 **In GitHub Copilot Chat**, use `/speckit.tasks` to generate an actionable task
 list from the implementation plan. Tasks are derived from the contracts, data
@@ -344,7 +344,7 @@ Review `specs/002-frontend-deploy/tasks.md` and adjust priorities if needed.
 
 ---
 
-### 3.6 — Analyze and Validate
+### 3.6 - Analyze and Validate
 
 **In GitHub Copilot Chat**, use `/speckit.analyze` to run a cross-artifact
 consistency check. This catches mismatches between the spec, plan, contracts,
@@ -365,7 +365,7 @@ Address any inconsistencies reported before proceeding.
 
 ---
 
-### 3.7 — Implement
+### 3.7 - Implement
 
 **In GitHub Copilot Chat**, use `/speckit.implement` to execute the task list and
 build the frontend deployment workflow.
@@ -393,7 +393,7 @@ git commit -m "feat: add frontend deployment workflow"
 
 ---
 
-### 3.8 — Run the Frontend Deployment End-to-End
+### 3.8 - Run the Frontend Deployment End-to-End
 
 With the frontend deployment workflow implemented, push to GitHub and run the
 pipeline end-to-end to confirm everything works.
@@ -441,15 +441,15 @@ If any step fails, check the workflow logs for errors and fix before proceeding.
 
 ---
 
-## Part 4 — API App
+## Part 4 - API App
 
 > **Agenda:** Speed run to create a spec for backend API deployment in the same way as the frontend.
 
 Use the Spec-Kit **speed workflow** to create a spec for deploying the backend API.
-The speed workflow runs all spec-kit commands in rapid succession —
+The speed workflow runs all spec-kit commands in rapid succession -
 specify → clarify → plan → tasks → implement.
 
-### 4.1 — Create the Backend Deployment Spec
+### 4.1 - Create the Backend Deployment Spec
 
 ```
 /speckit.specify Deploy the AI Genius backend API via GitHub Actions.
@@ -463,7 +463,7 @@ The App Service must enforce HTTPS only. The workflow must produce a green
 check and the /health endpoint must return { "status": "ok" }.
 ```
 
-### 4.2 — Speed-Run: Clarify, Plan, Tasks
+### 4.2 - Speed-Run: Clarify, Plan, Tasks
 
 Run each command in quick succession without pausing:
 
@@ -485,7 +485,7 @@ Authentication: OIDC with id-token: write permission.
 /speckit.tasks
 ```
 
-### 4.3 — Implement and Deploy
+### 4.3 - Implement and Deploy
 
 ```
 /speckit.implement
@@ -516,7 +516,7 @@ Expected:
 
 ---
 
-## Part 5 — Quality Gates
+## Part 5 - Quality Gates
 
 > **Agenda:** Add quality gates to the frontend and backend pipelines.
 
@@ -524,13 +524,13 @@ Use the Spec-Kit **speed workflow** to add quality gates and deployment approval
 to the CI/CD pipeline. Gates enforce code quality, security checks, and manual
 approvals before changes reach production.
 
-### 5.1 — Create the Gates Spec
+### 5.1 - Create the Gates Spec
 
 ```
 /speckit.specify Add quality gates and deployment approvals to the AI Genius CI/CD pipeline.
 Update the GitHub Actions workflows to include:
 1. A CI workflow (.github/workflows/ci.yml) that runs on every pull request
-   to main — builds the frontend and API, runs tests.
+   to main - builds the frontend and API, runs tests.
 2. Branch protection on main: require PR, require passing CI checks,
    require code review before merge.
 3. GitHub environment protection rules:
@@ -539,10 +539,10 @@ Update the GitHub Actions workflows to include:
    - prod: 2 required reviewers + 5-minute wait timer
 4. Update deploy-web.yml and deploy-api.yml to reference the production
    environment so deployment pauses for approval.
-All gates must be enforced — no bypassing allowed.
+All gates must be enforced - no bypassing allowed.
 ```
 
-### 5.2 — Speed-Run: Clarify, Plan, Tasks
+### 5.2 - Speed-Run: Clarify, Plan, Tasks
 
 Run each command in quick succession without pausing:
 
@@ -568,7 +568,7 @@ Branch protection: require PR, require status checks, require review.
 /speckit.tasks
 ```
 
-### 5.3 — Implement and Verify
+### 5.3 - Implement and Verify
 
 ```
 /speckit.implement
@@ -598,7 +598,7 @@ Expected:
 
 ---
 
-## Part 6 — Wrap-up
+## Part 6 - Wrap-up
 
 > **Agenda:** Wrap-up and next steps.
 
@@ -608,11 +608,11 @@ We used Spec-Kit and GitHub Copilot to:
 
 1. **Set up** the spec-kit scaffolding and project constitution.
 2. **Understood** a complete, existing spec (`001-bicep-cicd-workflow`) by reading every artifact.
-3. **Created** a frontend deployment spec step-by-step — specify → clarify → checklist → plan → tasks → analyze → implement.
+3. **Created** a frontend deployment spec step-by-step - specify → clarify → checklist → plan → tasks → analyze → implement.
 4. **Speed-ran** the same workflow for the backend API.
 5. **Added** quality gates as a new spec without touching a single workflow file manually.
 
-Every decision — from auth to environment tiers to reviewer counts — lives in the spec. The code is just its expression.
+Every decision - from auth to environment tiers to reviewer counts - lives in the spec. The code is just its expression.
 
 ---
 
@@ -622,4 +622,4 @@ Every decision — from auth to environment tiers to reviewer counts — lives i
 
 ---
 
-*AI Genius — Season 4, Episode 2 · Spec-Kit with GitHub Copilot*
+*AI Genius - Season 4, Episode 2 · Spec-Kit with GitHub Copilot*
