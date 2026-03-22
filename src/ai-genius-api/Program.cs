@@ -74,3 +74,5 @@ app.MapGet("/api/episodes/{id:int}", (int id) =>
 });
 
 app.Run();
+
+public partial class Program { }
