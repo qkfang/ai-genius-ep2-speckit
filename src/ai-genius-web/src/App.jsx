@@ -58,14 +58,14 @@ function App() {
             <div className="episodes-grid">
               {series.topics.map((topic) => (
                 <div key={topic.episode} className={`episode-card${topic.episode === 2 ? ' episode-card--speckit' : ''}`}>
+                  <span className="episode-number">Ep {topic.episode}</span>
+                  <p className="episode-title">{topic.title}</p>
                   {topic.episode === 2 && (
                     <div className="speckit-ep-badge">
                       <img src="/speckit-logo-small.webp" alt="SpecKit logo" className="speckit-ep-icon" />
                       <span>SpecKit</span>
                     </div>
                   )}
-                  <span className="episode-number">Ep {topic.episode}</span>
-                  <p className="episode-title">{topic.title}</p>
                   <span className={`episode-status ${topic.status}`}>{topic.status}</span>
                 </div>
               ))}
@@ -80,7 +80,7 @@ function App() {
           <a href="https://react.dev" target="_blank" rel="noreferrer">React</a>
           {' '}+{' '}
           <a href="https://dotnet.microsoft.com" target="_blank" rel="noreferrer">.NET</a>
-          {' '}· Season 6 - Episode 2 —{' '}
+          {' '}· Season 4 - Episode 2 —{' '}
           <a href="https://github.com/github/spec-kit" target="_blank" rel="noreferrer" className="footer-speckit-link">
             <img src="/speckit-logo-small.webp" alt="" className="footer-speckit-icon" />
             SpecKit
