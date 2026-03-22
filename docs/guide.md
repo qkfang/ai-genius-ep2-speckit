@@ -614,8 +614,6 @@ We used Spec-Kit and GitHub Copilot to:
 
 Every decision - from auth to environment tiers to reviewer counts - lives in the spec. The code is just its expression.
 
----
-
 ### Explore Spec-Kit Further
 
 **GitHub repository:** [github.com/github/spec-kit](https://github.com/github/spec-kit)
