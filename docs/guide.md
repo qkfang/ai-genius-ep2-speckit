@@ -17,12 +17,43 @@
 
 | Part | Topic |
 |------|-------|
+| [Part 0 - The Demo Apps](#part-0--the-demo-apps) | Overview of the frontend and API apps |
 | [Part 1 - Setup](#part-1--setup) | Set up Spec-Kit in the GitHub repo |
 | [Part 2 - Azure IaC Deployment](#part-2--azure-iac-deployment) | Explain the existing Azure IaC pipeline spec & its components |
 | [Part 3 - Frontend App](#part-3--frontend-app) | Step-by-step: create a new spec to deploy the frontend via GitHub Actions |
 | [Part 4 - API App](#part-4--api-app) | Speed run: create a spec for backend API deployment the same way |
 | [Part 5 - Quality Gates](#part-5--quality-gates) | Add quality gates to the pipelines |
 | [Part 6 - Wrap-up](#part-6--wrap-up) | Wrap-up and next steps |
+
+---
+
+## Part 0 - The Demo Apps
+
+> **Agenda:** Overview of the frontend and API apps that will be deployed during this session.
+
+This session uses the **AI Genius** demo app — a full-stack web application consisting of two components:
+
+### React Frontend (`src/ai-genius-web`)
+
+A React 18 + Vite single-page application that displays Microsoft AI Genius series episodes. It fetches episode data from the backend API and renders them as interactive cards.
+
+![Microsoft AI Genius web app](res/web-app.png)
+
+### .NET API Backend (`src/ai-genius-api`)
+
+A .NET 9 minimal API that serves episode and series metadata. It exposes a set of REST endpoints consumed by the frontend and includes a built-in Swagger UI for exploration.
+
+![AI Genius API](res/web-api.png)
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/status` | Runtime status |
+| `GET /api/health` | Health check |
+| `GET /api/series` | Series info |
+| `GET /api/episodes` | All episodes |
+| `GET /api/episodes/{id}` | Episode by number |
+
+Both components are deployed to Azure — the frontend to **Azure Static Web Apps** and the API to **Azure App Service** — via GitHub Actions workflows built with Spec-Kit.
 
 ---
 
