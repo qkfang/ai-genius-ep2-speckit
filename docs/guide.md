@@ -30,7 +30,7 @@
 
 > **Agenda:** Set up Spec-Kit in the GitHub repo.
 
-### Prerequisites
+### 1.1 Prerequisites
 
 Before starting, make sure you have:
 
@@ -59,7 +59,7 @@ uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0
 
 ---
 
-### Step 1 - Install Specify CLI
+### 1.2 - Install Specify CLI
 
 The `specify` CLI scaffolds the spec-kit file structure and installs the `/speckit.*`
 slash commands into your AI agent. For GitHub Copilot, this writes prompt files into
@@ -72,7 +72,7 @@ specify init . --ai copilot
 specify init . --ai copilot --script ps
 ```
 
-### Verify the installation
+### 1.3 Verify the installation
 
 ```bash
 specify check
@@ -96,7 +96,7 @@ After initialisation, Copilot gains these slash commands in its context:
 
 ---
 
-### Step 2 - Define Your Constitution
+### 1.4 - Define Your Constitution
 
 **In GitHub Copilot Chat**, use `/speckit.constitution` to establish the governing
 principles for this project. The constitution is committed to `specs/constitution.md` and
