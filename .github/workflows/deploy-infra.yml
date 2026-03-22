@@ -1,0 +1,105 @@
+name: Deploy Infrastructure to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Target deployment environment
+        default: development
+        options:
+          - development
+          - staging
+          - production
+
+concurrency:
+  group: "deploy-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  APP_NAME: aigenius
+  AZURE_LOCATION: eastus2
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      app-service-name: ${{ steps.capture-outputs.outputs.app-service-name }}
+      static-web-app-token: ${{ steps.capture-outputs.outputs.static-web-app-token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Map environment to short name
+        id: env-map
+        run: |
+          case "${{ github.event.inputs.environment || 'development' }}" in
+            development) env_short=dev ;;
+            staging)     env_short=qa ;;
+            production)  env_short=prod ;;
+            *)
+              echo "Unknown environment: ${{ github.event.inputs.environment }}"
+              exit 1
+              ;;
+          esac
+          resource_group="rg-aigenius-${env_short}"
+          param_file="bicep/parameters.${env_short}.json"
+          echo "env_short=${env_short}"           >> $GITHUB_OUTPUT
+          echo "resource_group=${resource_group}" >> $GITHUB_OUTPUT
+          echo "param_file=${param_file}"         >> $GITHUB_OUTPUT
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ steps.env-map.outputs.resource_group }} \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Bicep
+        run: |
+          az deployment group create \
+            --name main-deploy \
+            --resource-group ${{ steps.env-map.outputs.resource_group }} \
+            --template-file bicep/main.bicep \
+            --parameters @${{ steps.env-map.outputs.param_file }}
+
+      - name: Capture outputs
+        id: capture-outputs
+        run: |
+          app_service_name=$(az deployment group show \
+            --name main-deploy \
+            --resource-group ${{ steps.env-map.outputs.resource_group }} \
+            --query properties.outputs.nodeAppHostname.value \
+            --output tsv)
+          static_web_app_token=$(az deployment group show \
+            --name main-deploy \
+            --resource-group ${{ steps.env-map.outputs.resource_group }} \
+            --query properties.outputs.staticWebAppToken.value \
+            --output tsv)
+          echo "app-service-name=${app_service_name}"     >> $GITHUB_OUTPUT
+          echo "static-web-app-token=${static_web_app_token}" >> $GITHUB_OUTPUT
+
+  deploy-api:
+    needs: [infra]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API placeholder
+        run: echo "Deploying API to ${{ needs.infra.outputs.app-service-name }}"
+
+  deploy-web:
+    needs: [infra]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Web placeholder
+        run: echo "SWA token present: ${{ needs.infra.outputs.static-web-app-token }}"
