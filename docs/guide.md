@@ -491,7 +491,7 @@ If any step fails, check the workflow logs for errors and fix before proceeding.
 
 > **Agenda:** Speed run to create a spec for backend API deployment in the same way as the frontend.
 
-Use the Spec-Kit to create a spec for deploying the backend API.
+Use the Spec-Kit with `Autopilot` to create a spec for deploying the backend API.
 The speed workflow runs all spec-kit commands in rapid succession -
 specify → clarify → plan → tasks → implement.
 
@@ -545,7 +545,7 @@ Check the subagent logs and review responses. We can check the progress during t
 
 > **Agenda:** Add quality gates to the frontend and backend pipelines.
 
-Use the Spec-Kit **speed workflow** to add quality gates and deployment approvals
+Use the Spec-Kit with `GitHub Copilot Cli` to add quality gates and deployment approvals
 to the CI/CD pipeline. Gates enforce code quality, security checks, and manual
 approvals before changes reach production.
 
@@ -567,9 +567,6 @@ Update the GitHub Actions workflows to include:
 All gates must be enforced - no bypassing allowed.
 ```
 
-### 5.2 - Speed-Run: Clarify, Plan, Tasks
-
-Run each command in quick succession without pausing:
 
 ```
 /speckit.clarify The CI workflow builds the frontend (npm ci && npm run build
@@ -593,33 +590,10 @@ Branch protection: require PR, require status checks, require review.
 /speckit.tasks
 ```
 
-### 5.3 - Implement and Verify
-
 ```
 /speckit.implement
 ```
 
-After implementation, push and verify:
-
-```bash
-git add .
-git commit -m "feat: add quality gates and deployment approvals"
-git push origin main
-```
-
-Verify the gates are working:
-
-1. Create a pull request targeting `main`.
-2. Confirm the CI workflow runs and must pass before merge.
-3. After merging, confirm the deployment workflow pauses for approval.
-4. Approve the deployment and verify it completes successfully.
-
-```
-Expected:
-✅ PRs require passing CI checks before merge
-✅ Deployments to production require manual approval
-✅ Environment protection rules are enforced
-```
 
 ---
 
