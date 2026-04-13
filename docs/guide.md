@@ -552,6 +552,9 @@ approvals before changes reach production.
 ### 5.1 - Create the Gates Spec
 
 ```
+Please run below steps one by one, and provide response automatically. make sure each step finishes super fast!
+
+Step 1: 
 /speckit.specify Add quality gates and deployment approvals to the AI Genius CI/CD pipeline.
 Update the GitHub Actions workflows to include:
 1. A CI workflow (.github/workflows/ci.yml) that runs on every pull request
@@ -565,18 +568,15 @@ Update the GitHub Actions workflows to include:
 4. Update deploy-web.yml and deploy-api.yml to reference the production
    environment so deployment pauses for approval.
 All gates must be enforced - no bypassing allowed.
-```
 
-
-```
+Step 2: 
 /speckit.clarify The CI workflow builds the frontend (npm ci && npm run build
 in src/ai-genius-web) and the API (dotnet build && dotnet test in
 src/ai-genius-api). Branch protection and environment rules are configured
 in GitHub Settings, not in workflow files. The deployment workflows add
 an environment: production key to trigger the approval gate.
-```
 
-```
+Step 3: 
 /speckit.plan
 CI workflow: .github/workflows/ci.yml
 Trigger: pull_request to main
@@ -584,13 +584,11 @@ Steps: checkout → build frontend → build & test API
 Environments: dev (no gate), qa (1 reviewer), prod (2 reviewers + wait)
 Deploy workflows: add environment: production to deploy jobs.
 Branch protection: require PR, require status checks, require review.
-```
 
-```
+Step 4: 
 /speckit.tasks
-```
 
-```
+Step 5: 
 /speckit.implement
 ```
 
