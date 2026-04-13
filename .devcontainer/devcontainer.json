@@ -6,14 +6,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
 		"ghcr.io/devcontainers/features/powershell:1": {},
-		"ghcr.io/devcontainers/features/dotnet:1": {},
-		"ghcr.io/devcontainers/features/node:1": {
-			"nodeGypDependencies": true,
-			"version": "lts"
-        },
-        "ghcr.io/devcontainers/features/python:1": {
-            "version": "3.11"
-        }
+		"ghcr.io/devcontainers/features/dotnet:1": {}
 	},
 	"waitFor": "onCreateCommand",
 	"postCreateCommand": "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
