@@ -41,7 +41,7 @@ A React 18 + Vite single-page application that displays Microsoft AI Genius seri
 
 ### .NET API Backend (`src/ai-genius-api`)
 
-A .NET 9 minimal API that serves episode and series metadata. It exposes a set of REST endpoints consumed by the frontend and includes a built-in Swagger UI for exploration.
+A .NET 9 minimal API that serves episode and series metadata. It exposes a set of REST endpoints consumed by the frontend and includes a built-in Swagger UI for exploration. Swagger endpoint `http://localhost:5151/swagger/index.html`.
 
 ![AI Genius API](res/web-api.png)
 
