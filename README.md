@@ -4,6 +4,8 @@
 
 > **Spec-Driven Development with GitHub Copilot, then deploy to Azure using Bicep and GitHub Actions.**
 
+![Deploy Frontend](https://github.com/github/ai-genius-s4-ep2-speckit/actions/workflows/deploy-web.yml/badge.svg)
+
 ---
 
 ## 📋 Overview

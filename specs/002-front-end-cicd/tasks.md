@@ -20,8 +20,8 @@
 
 **Purpose**: Create workflow directory structure and verify prerequisites
 
-- [ ] T001 Create .github/workflows/ directory if not exists
-- [ ] T002 Verify src/ai-genius-web/package.json and package-lock.json exist
+- [X] T001 Create .github/workflows/ directory if not exists
+- [X] T002 Verify src/ai-genius-web/package.json and package-lock.json exist
 
 ---
 
@@ -45,12 +45,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Create workflow file .github/workflows/deploy-web.yml with name and push trigger on main branch
-- [ ] T004 [US1] Add checkout step using actions/checkout@v4 in .github/workflows/deploy-web.yml
-- [ ] T005 [US1] Add Node.js setup step using actions/setup-node@v4 with node-version 20 and npm cache in .github/workflows/deploy-web.yml
-- [ ] T006 [US1] Add install dependencies step running npm ci in src/ai-genius-web directory in .github/workflows/deploy-web.yml
-- [ ] T007 [US1] Add build application step running npm run build in src/ai-genius-web directory in .github/workflows/deploy-web.yml
-- [ ] T008 [US1] Add deploy step using Azure/static-web-apps-deploy@v1 with app_location set to src/ai-genius-web/dist and skip_app_build true in .github/workflows/deploy-web.yml
+- [X] T003 [US1] Create workflow file .github/workflows/deploy-web.yml with name and push trigger on main branch
+- [X] T004 [US1] Add checkout step using actions/checkout@v4 in .github/workflows/deploy-web.yml
+- [X] T005 [US1] Add Node.js setup step using actions/setup-node@v4 with node-version 20 and npm cache in .github/workflows/deploy-web.yml
+- [X] T006 [US1] Add install dependencies step running npm ci in src/ai-genius-web directory in .github/workflows/deploy-web.yml
+- [X] T007 [US1] Add build application step running npm run build in src/ai-genius-web directory in .github/workflows/deploy-web.yml
+- [X] T008 [US1] Add deploy step using Azure/static-web-apps-deploy@v1 with app_location set to src/ai-genius-web/dist and skip_app_build true in .github/workflows/deploy-web.yml
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - pushing to main triggers automated build and deployment
 
@@ -66,11 +66,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Add permissions block with id-token: write and contents: read to .github/workflows/deploy-web.yml
-- [ ] T010 [US2] Add Azure Login step using azure/login@v2 before deploy step in .github/workflows/deploy-web.yml with client-id, tenant-id, subscription-id from GitHub Secrets
-- [ ] T011 [US2] Update deploy step in .github/workflows/deploy-web.yml to use OIDC authentication instead of API token (if using Azure CLI deployment method)
-- [ ] T012 [US2] Document required GitHub Secrets (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID) in quickstart.md Prerequisites section (verify already documented)
-- [ ] T013 [US2] Document Azure federated credential configuration steps in quickstart.md Prerequisites section (verify already documented)
+- [X] T009 [US2] Add permissions block with id-token: write and contents: read to .github/workflows/deploy-web.yml
+- [X] T010 [US2] Add Azure Login step using azure/login@v2 before deploy step in .github/workflows/deploy-web.yml with client-id, tenant-id, subscription-id from GitHub Secrets
+- [X] T011 [US2] Update deploy step in .github/workflows/deploy-web.yml to use OIDC authentication instead of API token (if using Azure CLI deployment method)
+- [X] T012 [US2] Document required GitHub Secrets (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID) in quickstart.md Prerequisites section (verify already documented)
+- [X] T013 [US2] Document Azure federated credential configuration steps in quickstart.md Prerequisites section (verify already documented)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - automated deployment with OIDC security
 
@@ -86,10 +86,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T014 [P] [US3] Add descriptive name properties to all workflow steps in .github/workflows/deploy-web.yml (e.g., "Checkout code", "Setup Node.js", "Install dependencies", "Build application", "Azure Login (OIDC)", "Deploy to Azure Static Web Apps")
-- [ ] T015 [US3] Verify workflow uses ubuntu-latest runner for clear log output in .github/workflows/deploy-web.yml
-- [ ] T016 [US3] Add workflow status badge to repository README.md showing deployment status
-- [ ] T017 [US3] Document workflow monitoring steps in quickstart.md Daily Usage section (verify already documented)
+- [X] T014 [P] [US3] Add descriptive name properties to all workflow steps in .github/workflows/deploy-web.yml (e.g., "Checkout code", "Setup Node.js", "Install dependencies", "Build application", "Azure Login (OIDC)", "Deploy to Azure Static Web Apps")
+- [X] T015 [US3] Verify workflow uses ubuntu-latest runner for clear log output in .github/workflows/deploy-web.yml
+- [X] T016 [US3] Add workflow status badge to repository README.md showing deployment status
+- [X] T017 [US3] Document workflow monitoring steps in quickstart.md Daily Usage section (verify already documented)
 
 **Checkpoint**: All user stories should now be independently functional - full automated deployment with security and visibility
 
@@ -99,12 +99,12 @@
 
 **Purpose**: Improvements that affect multiple user stories and final validation
 
-- [ ] T018 [P] Review .github/workflows/deploy-web.yml for consistency with workflow-interface.md contract
-- [ ] T019 [P] Validate workflow syntax using GitHub Actions validator or local tools
-- [ ] T020 Add example workflow run output to quickstart.md for troubleshooting reference
-- [ ] T021 Run through quickstart.md validation steps to verify all documented procedures are accurate
-- [ ] T022 [P] Update .github/copilot-instructions.md with workflow file location if needed
-- [ ] T023 Verify constitution compliance: zero long-lived secrets stored, automated deployment on push to main
+- [X] T018 [P] Review .github/workflows/deploy-web.yml for consistency with workflow-interface.md contract
+- [X] T019 [P] Validate workflow syntax using GitHub Actions validator or local tools
+- [X] T020 Add example workflow run output to quickstart.md for troubleshooting reference
+- [X] T021 Run through quickstart.md validation steps to verify all documented procedures are accurate
+- [X] T022 [P] Update .github/copilot-instructions.md with workflow file location if needed
+- [X] T023 Verify constitution compliance: zero long-lived secrets stored, automated deployment on push to main
 
 ---
 

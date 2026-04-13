@@ -215,6 +215,51 @@ Once set up, the workflow runs automatically:
 
 ---
 
+## Example Workflow Run Output
+
+**Successful Deployment Example**:
+
+```
+Run summary for Deploy Frontend to Azure Static Web Apps
+✓ Checkout code (2s)
+✓ Setup Node.js (4s)
+✓ Install dependencies (18s)
+✓ Build application (24s)
+✓ Azure Login (OIDC) (3s)
+✓ Deploy to Azure Static Web Apps (45s)
+
+Total duration: 1m 36s
+Status: Success ✓
+Commit: a1b2c3d - feat: Update homepage banner
+Branch: main
+Triggered by: user@example.com
+```
+
+**Failed Deployment Example (Build Error)**:
+
+```
+Run summary for Deploy Frontend to Azure Static Web Apps
+✓ Checkout code (2s)
+✓ Setup Node.js (4s)
+✓ Install dependencies (17s)
+✗ Build application (8s)
+
+Error: Build failed
+npm run build
+> vite build
+
+✘ [ERROR] Expected "}" but found "const"
+    src/components/Header.jsx:15:4:
+      15 │     const title = "AI Genius";
+         ╵     ^^^^^
+
+Total duration: 31s
+Status: Failed ✗
+Fix: Check syntax errors in src/components/Header.jsx line 15
+```
+
+---
+
 ## Troubleshooting
 
 ### Workflow Doesn't Trigger
