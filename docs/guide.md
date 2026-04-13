@@ -258,10 +258,19 @@ The workflow must produce a green check on the Actions tab and the deployed
 site must be reachable at the Static Web App URL.
 ```
 
-Inspect the generated spec:
+Watch the `GitHub Copilot` logs and it will take a few moments. While waiting, go to `.specify\templates` folder to explore the template like `spec-template.md` and show whats there.
+
+When `/speckit.specify` completes, inspect the generated spec file below:
 
 ```bash
 cat specs/002-frontend-deploy/spec.md
+cat specs/002-frontend-deploy/checklists/requirements.md
+```
+
+Create feature branch to work on the task
+
+```bash
+/speckit.git.feature
 ```
 
 ---
@@ -269,7 +278,9 @@ cat specs/002-frontend-deploy/spec.md
 ### 3.2 - Clarify the Spec
 
 **In GitHub Copilot Chat**, use `/speckit.clarify` to resolve any ambiguities.
-Run it once with a general focus, then again with specific concerns.
+Run it once with a general focus, then again with specific concerns. 
+
+Use the `Clarify` button suggested by `GitHub Copilot` to continue the flow, answer follow up questions (about 5 of them). For each Q/A, look at the `spec.md` to review the incremental changes.
 
 **First pass - general clarification:**
 
